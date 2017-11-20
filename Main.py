@@ -1,28 +1,52 @@
-import numpy as np
-import quaternion as qt
-from math import *
-
-file = open("C:/Users/Student/Desktop/IMU_Stationary.txt", "r")
-
 #@todo initialise the complete data set
 #@todo create a main function? or whatever pythons version of it is
 #@todo plot the pretties
 #@todo filter the data...
 
 ####################################################
+################### DEPENDENCIES ###################
+####################################################
+import numpy as np
+import quaternion as qt
+
+
+####################################################
+################# GLOBAL CONSTANTS #################
+####################################################
+inputType = "file"
+fileLocale = "C:/Users/Student/Desktop/Uni/IMU/ROCO503x/IMU_Stationary.txt"
+numSamplesMax = 100
+
+
+####################################################
+################# GLOBAL VARIABLES #################
+####################################################
+dataFile = None
+listRaw = []
+listCrude = []
+listFiltered = []
+
+
+####################################################
 ################# CUSTOM FUNCTIONS #################
 ####################################################
-def getNextData(type):
+def getNextData():
     """
     # Extract the next piece of data
     :param type: Determines whether the function tries to read from a file or directly from an IMU
     :return:
     """
-    if (type == "file"):
-        data = file.readline()[:-1]  # Considered an array of chars, so [:-1] removes the last character
+    global inputType
+    if (inputType == "file"):
+        # Try to read from the file. If at the end, then return None
+        try:
+            data = dataFile.readline()[:-1]  # Considered an array of chars, so [:-1] removes the last character
+        except EOFError:
+            data = None
+
     else:
         data = None
-    data = np.array([float(i) for i in data.split(",")])
+    data = [float(i) for i in data.split(",")]
     return data
 
 
@@ -65,5 +89,131 @@ def doDeadReckoning(prevComplete, raw):
         complete[i+4] += acc[i] * delTime
 
     return
+
+
+####################################################
+############ INITIALIZATION FUNCTION(S) ############
+####################################################
+def init():
+    ###
+    # Initialise the lists
+    ###
+    global  listRaw, listCrude, listFiltered
+    #              [time, ax,  ay,  az,  gx,  gy,  gz]
+    listRaw.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+
+    #                [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
+    listCrude.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+    #                  gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
+
+    listFiltered.append(listCrude[0])
+
+    ###
+    # Open the data file or connect to the IMU
+    ###
+    global dataFile, fileLocale
+    if (inputType == "file"):
+        dataFile = open(fileLocale, "r")
+
+    return
+
+
+####################################################
+################# MAIN FUNCTION(S) #################
+####################################################
+def main():
+    # Variable declarations
+    global listRaw, listCrude, listFiltered, numSamplesMax
+
+    # Initialize the system
+    init()
+
+    # Perform the main code
+    while True:
+
+        listRaw.append(getNextData())
+        if (listRaw[-1] == None):
+            listRaw = listRaw[:-1]
+        print(listRaw.__len__())
+
+        # If enough samples have been collected, do more analysis
+        if (listRaw.__len__() >= numSamplesMax):
+            listRaw = listRaw[1-numSamplesMax:]
+
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

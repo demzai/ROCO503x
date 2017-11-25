@@ -8,6 +8,9 @@
 ####################################################
 import numpy as np
 import quaternion as qt
+import graph as gr
+from pyqtgraph.Qt import QtGui, QtCore
+#import time as time
 
 
 ####################################################
@@ -15,7 +18,11 @@ import quaternion as qt
 ####################################################
 inputType = "file"
 fileLocale = "C:/Users/Student/Desktop/Uni/IMU/ROCO503x/IMU_Stationary.txt"
-numSamplesMax = 100
+numSamplesMax = 1000
+graphWindow = gr.newWindow("Graphs", 640, 480)
+graphChart  = gr.newGraph(graphWindow, "Test")
+graphData   = gr.newPlot(graphChart, [], [], 'g', 'r', 'b', 5, 'o')
+updateEvery = 10
 
 
 ####################################################
@@ -25,6 +32,7 @@ dataFile = None
 listRaw = []
 listCrude = []
 listFiltered = []
+count = 0
 
 
 ####################################################
@@ -38,15 +46,18 @@ def getNextData():
     """
     global inputType
     if (inputType == "file"):
-        # Try to read from the file. If at the end, then return None
-        try:
-            data = dataFile.readline()[:-1]  # Considered an array of chars, so [:-1] removes the last character
-        except EOFError:
-            data = None
+        # Considered an array of chars, so [:-1] removes the last character
+        data = dataFile.readline()[:-1]
 
     else:
+        return None
+
+    # Try to convert the data into an array of floats
+    # This should only fail if the package is corrupt
+    try:
+        data = [float(i) for i in data.split(",")]
+    except:
         data = None
-    data = [float(i) for i in data.split(",")]
     return data
 
 
@@ -91,6 +102,26 @@ def doDeadReckoning(prevComplete, raw):
     return
 
 
+def getCol(data, column):
+    return np.array(data)[:,column].tolist()
+
+
+# Effectively the main function...
+def update():
+    global listRaw, count
+    count += 1
+    listRaw.append(getNextData())
+    if (listRaw[-1] == None):
+        listRaw = listRaw[:-1]
+    if (listRaw.__len__() >= numSamplesMax):
+        listRaw = listRaw[-numSamplesMax:]
+
+    if (count == updateEvery):
+        gr.updatePlot(graphData, getCol(listRaw, 1), getCol(listRaw, 0))
+    count = count%updateEvery
+    # gr.newPlot(graphChart, getCol(listRaw, 1)[-3:-1], getCol(listRaw, 0)[-3:-1], 'g', 'r', 'b', 5, 'o')
+
+
 ####################################################
 ############ INITIALIZATION FUNCTION(S) ############
 ####################################################
@@ -120,30 +151,31 @@ def init():
 
 
 ####################################################
-################# MAIN FUNCTION(S) #################
+##################### MAIN CODE ####################
 ####################################################
-def main():
-    # Variable declarations
-    global listRaw, listCrude, listFiltered, numSamplesMax
+# Cannot put into a function because QtCore.QTimer() is a dick
+# Initialize the system
+init()
 
-    # Initialize the system
-    init()
+# Perform the main code
+while True:
 
-    # Perform the main code
-    while True:
+    listRaw.append(getNextData())
+    if (listRaw[-1] == None):
+        listRaw = listRaw[:-1]
 
-        listRaw.append(getNextData())
-        if (listRaw[-1] == None):
-            listRaw = listRaw[:-1]
-        print(listRaw.__len__())
-
-        # If enough samples have been collected, do more analysis
-        if (listRaw.__len__() >= numSamplesMax):
-            listRaw = listRaw[1-numSamplesMax:]
+    # If enough samples have been collected, do more analysis
+    if (listRaw.__len__() >= numSamplesMax):
+        listRaw = listRaw[-numSamplesMax:]
+        break
+    print(listRaw.__len__())
 
 
-if __name__ == '__main__':
-    main()
+# Update the graph data
+timer = QtCore.QTimer()
+timer.timeout.connect(update)
+timer.start(0)
+
 
 
 

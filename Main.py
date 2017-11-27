@@ -9,8 +9,9 @@
 import numpy as np
 import quaternion as qt
 import graph as gr
-from pyqtgraph.Qt import QtGui, QtCore
-#import time as time
+import filter as fl
+from pyqtgraph.Qt import QtCore
+#import time
 
 
 ####################################################
@@ -23,6 +24,7 @@ graphWindow = gr.newWindow("Graphs", 640, 480)
 graphChart  = gr.newGraph(graphWindow, "Test")
 graphData   = gr.newPlot(graphChart, [], [], 'g', 'r', 'b', 5, 'o')
 updateEvery = 10
+filter10Hz  = fl.getFilter(1000, 30, 62.5)
 
 
 ####################################################
@@ -50,6 +52,7 @@ def getNextData():
         data = dataFile.readline()[:-1]
 
     else:
+        # @todo get input directly from the IMU
         return None
 
     # Try to convert the data into an array of floats
@@ -117,6 +120,7 @@ def update():
         listRaw = listRaw[-numSamplesMax:]
 
     if (count == updateEvery):
+        #gr.updatePlot(graphData, fl.runLowPassFilter(filter10Hz, getCol(listRaw, 1)), getCol(listRaw, 0))
         gr.updatePlot(graphData, getCol(listRaw, 1), getCol(listRaw, 0))
     count = count%updateEvery
     # gr.newPlot(graphChart, getCol(listRaw, 1)[-3:-1], getCol(listRaw, 0)[-3:-1], 'g', 'r', 'b', 5, 'o')
@@ -157,7 +161,7 @@ def init():
 # Initialize the system
 init()
 
-# Perform the main code
+# Acquire an initial set of data
 while True:
 
     listRaw.append(getNextData())

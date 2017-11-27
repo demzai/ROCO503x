@@ -1,7 +1,3 @@
-#@todo initialise the complete data set
-#@todo create a main function? or whatever pythons version of it is
-#@todo plot the pretties
-#@todo filter the data...
 
 ####################################################
 ################### DEPENDENCIES ###################
@@ -11,14 +7,23 @@ import quaternion as qt
 import graph as gr
 import filter as fl
 from pyqtgraph.Qt import QtCore
+
+import sys
+from ctypes import *
+#Phidget specific imports
+from Phidgets.Phidget import Phidget
+from Phidgets.PhidgetException import PhidgetErrorCodes, PhidgetException
+from Phidgets.Events.Events import SpatialDataEventArgs, AttachEventArgs, DetachEventArgs, ErrorEventArgs
+from Phidgets.Devices.Spatial import Spatial, SpatialEventData, TimeSpan
+from Phidgets.Phidget import PhidgetLogLevel
 #import time
 
 
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-inputType = "file"
-fileLocale = "C:/Users/Student/Desktop/Uni/IMU/ROCO503x/IMU_Stationary.txt"
+inputType = "live"
+fileLocale = "IMU_Stationary.txt"
 numSamplesMax = 1000
 graphWindow = gr.newWindow("Graphs", 640, 480)
 graphChart  = gr.newGraph(graphWindow, "Test")
@@ -51,17 +56,79 @@ def getNextData():
         # Considered an array of chars, so [:-1] removes the last character
         data = dataFile.readline()[:-1]
 
+        # Try to convert the data into an array of floats
+        # This should only fail if the package is corrupt
+        try:
+            data = [float(i) for i in data.split(",")]
+        except:
+            data = None
+        return data
     else:
-        # @todo get input directly from the IMU
-        return None
+        try:
+            data = [spatialData.Timestamp.seconds, spatialData.Acceleration[0], spatialData.Acceleration[1],
+                    spatialData.Acceleration[2], spatialData.AngularRate[0], spatialData.AngularRate[1],
+                    spatialData.AngularRate[2]]
+        except:
+            data = None
+        return data
 
-    # Try to convert the data into an array of floats
-    # This should only fail if the package is corrupt
+
+if (inputType != "file"):
     try:
-        data = [float(i) for i in data.split(",")]
-    except:
-        data = None
-    return data
+        spatial = Spatial()
+    except RuntimeError as e:
+        print("Runtime Exception: %s" % e.details)
+        print("Exiting....")
+        exit(1)
+
+
+#Information Display Function
+def DisplayDeviceInfo():
+    print("|------------|----------------------------------|--------------|------------|")
+    print("|- Attached -|-              Type              -|- Serial No. -|-  Version -|")
+    print("|------------|----------------------------------|--------------|------------|")
+    print("|- %8s -|- %30s -|- %10d -|- %8d -|" % (spatial.isAttached(), spatial.getDeviceName(), spatial.getSerialNum(), spatial.getDeviceVersion()))
+    print("|------------|----------------------------------|--------------|------------|")
+    print("Number of Acceleration Axes: %i" % (spatial.getAccelerationAxisCount()))
+    print("Number of Gyro Axes: %i" % (spatial.getGyroAxisCount()))
+    print("Number of Compass Axes: %i" % (spatial.getCompassAxisCount()))
+
+
+#Event Handler Callback Functions
+def SpatialAttached(e):
+    attached = e.device
+    print("Spatial %i Attached!" % (attached.getSerialNum()))
+
+def SpatialDetached(e):
+    detached = e.device
+    print("Spatial %i Detached!" % (detached.getSerialNum()))
+
+def SpatialError(e):
+    try:
+        source = e.device
+        print("Spatial %i: Phidget Error %i: %s" % (source.getSerialNum(), e.eCode, e.description))
+    except PhidgetException as e:
+        print("Phidget Exception %i: %s" % (e.code, e.details))
+
+
+def SpatialData(e):
+    source = e.device
+    print("Spatial %i: Amount of data %i" % (source.getSerialNum(), len(e.spatialData)))
+    for index, spatialData in enumerate(e.spatialData):
+        print("=== Data Set: %i ===" % (index))
+        if len(spatialData.Acceleration) > 0:
+            print("Acceleration> x: %6f  y: %6f  z: %6f" % (
+            spatialData.Acceleration[0], spatialData.Acceleration[1], spatialData.Acceleration[2]))
+        if len(spatialData.AngularRate) > 0:
+            print("Angular Rate> x: %6f  y: %6f  z: %6f" % (
+            spatialData.AngularRate[0], spatialData.AngularRate[1], spatialData.AngularRate[2]))
+        if len(spatialData.MagneticField) > 0:
+            print("Magnetic Field> x: %6f  y: %6f  z: %6f" % (
+            spatialData.MagneticField[0], spatialData.MagneticField[1], spatialData.MagneticField[2]))
+        print("Time Span> Seconds Elapsed: %i  microseconds since last packet: %i" % (
+        spatialData.Timestamp.seconds, spatialData.Timestamp.microSeconds))
+
+    print("------------------------------------------")
 
 
 def doDeadReckoning(prevComplete, raw):
@@ -120,8 +187,11 @@ def update():
         listRaw = listRaw[-numSamplesMax:]
 
     if (count == updateEvery):
-        #gr.updatePlot(graphData, fl.runLowPassFilter(filter10Hz, getCol(listRaw, 1)), getCol(listRaw, 0))
-        gr.updatePlot(graphData, getCol(listRaw, 1), getCol(listRaw, 0))
+#uncomment to see filtered
+
+        gr.updatePlot(graphData, fl.runLowPassFilter(filter10Hz, getCol(listRaw, 1)), getCol(listRaw, 0))
+#comment to not see raw
+    #    gr.updatePlot(graphData, getCol(listRaw, 1), getCol(listRaw, 0))
     count = count%updateEvery
     # gr.newPlot(graphChart, getCol(listRaw, 1)[-3:-1], getCol(listRaw, 0)[-3:-1], 'g', 'r', 'b', 5, 'o')
 
@@ -150,7 +220,46 @@ def init():
     global dataFile, fileLocale
     if (inputType == "file"):
         dataFile = open(fileLocale, "r")
+    else:
+        try:
+            # logging example, uncomment to generate a log file
+            # spatial.enableLogging(PhidgetLogLevel.PHIDGET_LOG_VERBOSE, "phidgetlog.log")
 
+            spatial.setOnAttachHandler(SpatialAttached)
+            spatial.setOnDetachHandler(SpatialDetached)
+            spatial.setOnErrorhandler(SpatialError)
+            spatial.setOnSpatialDataHandler(SpatialData)
+        except PhidgetException as e:
+            print("Phidget Exception %i: %s" % (e.code, e.details))
+            print("Exiting....")
+            exit(1)
+
+        print("Opening phidget object....")
+
+        try:
+            spatial.openPhidget()
+        except PhidgetException as e:
+            print("Phidget Exception %i: %s" % (e.code, e.details))
+            print("Exiting....")
+            exit(1)
+
+        print("Waiting for attach....")
+
+        try:
+            spatial.waitForAttach(10000)
+        except PhidgetException as e:
+            print("Phidget Exception %i: %s" % (e.code, e.details))
+            try:
+                spatial.closePhidget()
+            except PhidgetException as e:
+                print("Phidget Exception %i: %s" % (e.code, e.details))
+                print("Exiting....")
+                exit(1)
+            print("Exiting....")
+            exit(1)
+        else:
+            spatial.setDataRate(4)
+            DisplayDeviceInfo()
     return
 
 
@@ -172,7 +281,23 @@ while True:
     if (listRaw.__len__() >= numSamplesMax):
         listRaw = listRaw[-numSamplesMax:]
         break
-    print(listRaw.__len__())
+    #print(listRaw.__len__())
+    if (inputType != "file"):
+
+        print("Press Enter to quit....")
+
+        chr = sys.stdin.read(1)
+
+        print("Closing...")
+
+        try:
+            spatial.closePhidget()
+        except PhidgetException as e:
+            print("Phidget Exception %i: %s" % (e.code, e.details))
+            print("Exiting....")
+            exit(1)
+
+        print("Done.")
 
 
 # Update the graph data

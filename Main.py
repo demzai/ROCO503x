@@ -73,6 +73,8 @@ def doDeadReckoning(prevComplete, raw):
     # Complete data format = [time, ax, ay, az, vx, vy, vz, px, py, pz,
     #                           gx, gy, gz, tx, ty, tz, qw, qx, qy, qz]
     """
+
+    # Ensure that prevComplete isn't modified anywhere by copying the data over beforehand
     delTime = raw[0] - prevComplete[0]
     complete = prevComplete
 
@@ -142,10 +144,21 @@ def update():
     listFiltered = limitSize(listFiltered)
 
     # Get dead reckoned data
-    print(listRawDR)
-    temp = listRawDR
-    doDeadReckoning(listRawDR[-1], listRaw[-1])
-    print(temp)
+
+    ##################################################################################################
+    ######################################### BUG IN HERE!!!!!!!!!!! #################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    print(listRawDR)    # Prints before anything happens
+    __temp = listRawDR  # Stored in a brand new and unique variable to ensure isolation
+    doDeadReckoning(listRawDR[-1], listRaw[-1]) # Call to dead reckoning function
+    print(__temp)       # This should print out exactly the same as the previous print but it doesn't!
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
     # listFilteredDR.append(doDeadReckoning(listFilteredDR[-1], listFiltered[-1]))
 
     # Plot data if appropriate

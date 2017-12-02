@@ -20,10 +20,11 @@ numSamplesMax = 100
 minSamples  = 10
 graphWindow = gr.newWindow("Graphs", 640, 480)
 graphChart  = gr.newGraph(graphWindow, "Test")
-graphData   = gr.newPlot(graphChart, [], [], 'b', 'b', 'b', 3, 'o')
-graphFilt   = gr.newPlot(graphChart, [], [], 'r', 'r', 'r', 3, 'o')
+graphAccX   = gr.newPlot(graphChart, [], [], 'r', None, None, 3, 'o')
+graphAccY   = gr.newPlot(graphChart, [], [], 'g', None, None, 3, 'o')
+graphAccZ   = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 updateEvery = 10
-cutoffFrequency = [5, 1]
+cutoffFrequency = [0.5, 20] # [Accel Low Pass, Gyro High Pass]
 
 
 ####################################################
@@ -76,23 +77,30 @@ def doDeadReckoning(prevComplete, raw):
 
     # Ensure that prevComplete isn't modified anywhere by copying the data over beforehand
     delTime = raw[0] - prevComplete[0]
-    complete = prevComplete
+    complete = prevComplete * 1 # Deep copy items over
 
     # Update the time
     complete[0] = raw[0]
 
+    # #                [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
+    # listRawDR.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    #                   0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+    # #                  gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
+    # #              [time, ax,  ay,  az,  gx,  gy,  gz]
+    # listRaw.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+
     # Update the Euler orientation
-    for i in range(-1, -3):
-        complete[i-7] = raw[i]
-        complete[i-4] += raw[i] * delTime  # Theta += Gyro * time
+    for i in range(0, 3):
+        complete[i+10] = raw[i+4]
+        complete[i+13] += raw[i+4] * delTime  # Theta += Gyro * time
 
     # Update the Quaternion orientation
-    gyroQuat = qt.euler_to_quat(raw[-4:-1])
-    currQuat = [complete[-4], complete[-3], complete[-2], complete[-1]]
-    complete[-4], complete[-3], complete[-2], complete[-1] = qt.q_mult(currQuat, gyroQuat)
+    gyroQuat = qt.euler_to_quat(raw[4:7])
+    currQuat = [complete[16], complete[17], complete[18], complete[19]]
+    complete[16], complete[17], complete[18], complete[19] = qt.q_mult(currQuat, gyroQuat)
 
     # Re-orientate the accelerometer values based on the IMU orientation
-    currQuat = [complete[-4], complete[-3], complete[-2], complete[-1]]
+    currQuat = [complete[16], complete[17], complete[18], complete[19]]
     dcm = np.array(qt.quat_to_dcm(currQuat))
     acc = np.array([raw[1], raw[2], raw[3]]).transpose()
     acc = dcm.dot(acc)
@@ -135,37 +143,30 @@ def update():
     listRaw = limitSize(listRaw)
 
     # Get filtered data
-    listFiltered.append(
-        fl.filterData(listRaw,
-                      ['butter', 'low' , cutoffFrequency[0], 4],
-                      ['butter', 'high', cutoffFrequency[1], 4]))
-    if (nextData == None):
-        listFiltered[-1] = nextData
-    listFiltered = limitSize(listFiltered)
+    if (nextData != None):
+        global  listRawDR, listFilteredDR, listFiltered
+        listFiltered.append(
+            fl.filterData(listRaw,
+                          ['butter', 'low' , cutoffFrequency[0], 4],
+                          ['butter', 'high', cutoffFrequency[1], 4]))
+        listFiltered = limitSize(listFiltered)
 
     # Get dead reckoned data
+        listRawDR.append(doDeadReckoning(listRawDR[-1], listRaw[-1]))
+        listRawDR = limitSize(listRawDR)
+        listFilteredDR.append(doDeadReckoning(listFilteredDR[-1], listFiltered[-1]))
+        listFilteredDR = limitSize(listFilteredDR)
 
-    ##################################################################################################
-    ######################################### BUG IN HERE!!!!!!!!!!! #################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    print(listRawDR)    # Prints before anything happens
-    __temp = listRawDR  # Stored in a brand new and unique variable to ensure isolation
-    doDeadReckoning(listRawDR[-1], listRaw[-1]) # Call to dead reckoning function
-    print(__temp)       # This should print out exactly the same as the previous print but it doesn't!
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    # listFilteredDR.append(doDeadReckoning(listFilteredDR[-1], listFiltered[-1]))
+# #                [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
+# listRawDR.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+#                   0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+# #                  gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
 
     # Plot data if appropriate
     if (count == updateEvery):
-        gr.updatePlot(graphData, getCol(listRaw, 1), getCol(listRaw, 0))
-        gr.updatePlot(graphFilt, getCol(listRawDR, 1), getCol(listRawDR, 0))
-        # gr.updatePlot(graphFilt, getCol(listFilteredDR, 1), getCol(listFilteredDR, 0))
+        gr.updatePlot(graphAccX, getCol(listFilteredDR, 13), getCol(listFilteredDR, 0))
+        gr.updatePlot(graphAccY, getCol(listFilteredDR, 14), getCol(listFilteredDR, 0))
+        gr.updatePlot(graphAccZ, getCol(listFilteredDR, 15), getCol(listFilteredDR, 0))
     count = count%updateEvery
     if (inputType == 'file'):
         time.sleep(sleepTime)

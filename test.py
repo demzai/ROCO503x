@@ -1,86 +1,97 @@
-from pyqtgraph.Qt import QtGui, QtCore
+# @todo create complementary filter
+
+####################################################
+################### DEPENDENCIES ###################
+####################################################
+from scipy.signal import butter, cheby1, cheby2, lfilter
 import numpy as np
-import pyqtgraph as pg
 
 
-win = pg.GraphicsWindow(title="-------")
-# Set the window size(x,y) [pixels]
-win.resize(1000,600)
-# Set the window name - the very top bar with the close button
-win.setWindowTitle('pyqtgraph example: Scheming >=D')
-
-# Enable antialiasing for prettier plots
-pg.setConfigOptions(antialias=True)
+####################################################
+################# GLOBAL CONSTANTS #################
+####################################################
+imuSampleFrequency = 62.5
+chebyRipple = 1 #dB
 
 
-# Add a plot without any data within the precreated window
-# Add a title to the plot
-p2 = win.addPlot(title="Multiple curves")
-# Turn a background grid on for the graph
-p2.showGrid(x=True, y=True)
-# Label the x & y axes
-p2.setLabel('left', "Y Axis", units='Yo Mama')
-p2.setLabel('bottom', "X Axis", units='t')
-# State whether the axes are linear of logarithmic
-p2.setLogMode(x=True, y=False)
-# Add data to the plot
-p2.plot(np.random.normal(size=100), pen=(255,0,0), name="Red curve")
-p2.plot(np.random.normal(size=10)+5, pen=(0,255,0), name="Green curve")
-p2.plot(np.random.normal(size=100)+10,  # Some random data
-        pen=(0,0,255),                  # Graph colour
-        name="Blue curve",              # Legend name
-        symbol='o',                     # Symbol shape
-        symbolBrush=(255,0,0),          # Data point dot colour
-        symbolPen=None,                 # Data point dot outline colour
-        symbolSize=3)                   # Data point dot size
+# IMU sampling frequency is 62.5Hz
+# Create a butterworth filter & apply it to provided data
+def butter_filter(data, order, cutoff, type, fSample):
+    nyq = 0.5 * fSample
+    p = butter(order, cutoff/nyq, btype=type)
+    return lfilter(p[0], p[1], data)
 
 
-p6 = win.addPlot(title="Updating plot")
-# Hide the x-axis
-p6.showAxis('bottom', False)
-# create a pointer to the data to be plotted
-curve = p6.plot(pen='y',                # Line colour
-                fillLevel=0,            # Imaginary line (y=0 in this case) to fill up /down to data
-                brush=(0,255,255,100))  # Fill colour (R,G,B,A)
-data = np.random.normal(size=(10,100))
-ptr = 0
-def update():
-    global curve, data, ptr, p6
-    curve.setData( data[ptr] + np.sin( np.linspace(0, 10, 100) )*5 )
-    if ptr == 0:
-        p6.enableAutoRange('xy', False)  ## stop auto-scaling after the first data set is plotted
-    ptr = (ptr+1)%10
-# Create an object to call the update function
-timer = QtCore.QTimer()
-timer.timeout.connect(update)
-timer.start(50)
+# Create a chebyshev top-wobble filter & apply it to provided data
+def cheby_top_filter(data, order, cutoff, type, fSample):
+    nyq = 0.5 * fSample
+    p = cheby1(order, chebyRipple, cutoff/nyq, btype=type)
+    return lfilter(p[0], p[1], data)
 
 
-# Add a new row of graphs to the window
-win.nextRow()
+# Create a chebyshev bottom-wobble filter & apply it to provided data
+def cheby_bottom_filter(data, order, cutoff, type, fSample):
+    nyq = 0.5 * fSample
+    p = cheby2(order, chebyRipple, cutoff/nyq, btype=type)
+    return lfilter(p[0], p[1], data)
 
-# Cool, but look into later
-x2 = np.linspace(-100, 100, 1000)
-data2 = np.sin(x2) / x2
-p8 = win.addPlot(title="Region Selection")
-p8.plot(data2, pen=(255,255,255,200))
-lr = pg.LinearRegionItem([400,700])
-lr.setZValue(-10)
-p8.addItem(lr)
 
-p9 = win.addPlot(title="Zoom on selected region")
-p9.plot(data2)
-def updatePlot():
-    p9.setXRange(*lr.getRegion(), padding=0)
-def updateRegion():
-    lr.setRegion(p9.getViewBox().viewRange()[0])
-lr.sigRegionChanged.connect(updatePlot)
-p9.sigXRangeChanged.connect(updateRegion)
-updatePlot()
+# Select a filter & perform it
+def doFilter(data, filterSelect, filterType, cutoffFrequency, order, sampleFrequency):
+    if(filterSelect == 'butter'):
+        return butter_filter(data, order, cutoffFrequency,
+                             filterType, sampleFrequency)[-1]
+    elif(filterSelect == 'chebyT'):
+        return cheby_top_filter(data, order, cutoffFrequency,
+                                filterType, sampleFrequency)[-1]
+    elif(filterSelect == 'chebyB'):
+        return cheby_bottom_filter(data, order, cutoffFrequency,
+                                   filterType, sampleFrequency)[-1]
+    else:
+        return 0
 
-## Start Qt event loop unless running in interactive mode or using pyside.
-if __name__ == '__main__':
-    import sys
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+
+# Extract a single column of data
+def getCol(data, column):
+    return np.array(data)[:, column].tolist()
+
+
+# Filter a data set
+# filterX = [filterSelect, filterType, cutoffFrequency(ies), order]
+def filterData(data, filter1, filter2, sampleFrequency=imuSampleFrequency):
+    returnVal = [data[-1][0], 0,0,0, 0,0,0]
+
+    for x in range(1, 3):
+        # returnVal[1] = 0.1
+        returnVal[ x ] = doFilter(getCol(data, x  ), filter1[0],
+                                  filter1[2], np.array(filter1[1]),
+                                  filter1[0], sampleFrequency)
+        returnVal[x+3] = doFilter(getCol(data, x+3), filter2[0],
+                                  filter2[2], np.array(filter2[1]),
+                                  filter2[0], sampleFrequency)
+    return returnVal
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

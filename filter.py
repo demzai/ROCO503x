@@ -71,7 +71,15 @@ def filterData(data, filter1, filter2, sampleFrequency=imuSampleFrequency):
     return returnVal
 
 
+# Filter a specific set of data
+def filterSensor(data, filter, sampleFrequency=imuSampleFrequency):
+    returnVal = [0,0,0]
 
+    for x in range(1, 4):
+        returnVal[ x ] = doFilter(getCol(data, x  ), filter[0],
+                                  filter[1], np.array(filter[2]),
+                                  filter[3], sampleFrequency)[-1]
+    return returnVal
 
 
 

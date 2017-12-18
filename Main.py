@@ -24,7 +24,7 @@ graphAccX   = gr.newPlot(graphChart, [], [], 'r', None, None, 3, 'o')
 graphAccY   = gr.newPlot(graphChart, [], [], 'g', None, None, 3, 'o')
 graphAccZ   = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 updateEvery = 10
-cutoffFrequency = [0.5, 20] # [Accel Low Pass, Gyro High Pass]
+cutoffFrequency = [20, 5] # [Accel Low Pass, Gyro High Pass]
 
 
 ####################################################
@@ -82,12 +82,11 @@ def doDeadReckoning(prevComplete, raw):
     # Update the time
     complete[0] = raw[0]
 
-    # #                [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
-    # listRawDR.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    #                   0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
-    # #                  gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
-    # #              [time, ax,  ay,  az,  gx,  gy,  gz]
-    # listRaw.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+    # listRawDR:
+    # [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
+    #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
+    #
+    # listRaw:[time, ax,  ay,  az,  gx,  gy,  gz]
 
     # Update the Euler orientation
     for i in range(0, 3):
@@ -95,6 +94,11 @@ def doDeadReckoning(prevComplete, raw):
         complete[i+13] += raw[i+4] * delTime  # Theta += Gyro * time
 
     # Update the Quaternion orientation
+        # @todo don't use quaternions, update via small rotation matrices
+        # @todo store the rotation matrix between iterations
+        # Quaternions are safer to use than Euler angles (no gimbal lock)
+        # Choice was either to store 4 quaternion values, or 9 rotation matrix values
+        # Both routes are equivalent as they're updated using small angles only
     gyroQuat = qt.euler_to_quat(raw[4:7])
     currQuat = [complete[16], complete[17], complete[18], complete[19]]
     complete[16], complete[17], complete[18], complete[19] = qt.q_mult(currQuat, gyroQuat)
@@ -105,10 +109,14 @@ def doDeadReckoning(prevComplete, raw):
     acc = np.array([raw[1], raw[2], raw[3]]).transpose()
     acc = dcm.dot(acc)
 
+
     # Update the acceleration, velocity & position info
-    for i in range(0, 2):
+    for i in range(0, 3):
         # Acceleration
         complete[i+1] = acc[i]
+        # Subtract gravity
+        if (i == 2):
+            acc[i] -= 1
         # Position += u*t + 0.5*a*t^2
         complete[i+7] += (complete[i+4] + 0.5*acc[i]*delTime) * delTime
         # Velocity += a*t
@@ -132,8 +140,39 @@ def limitSize(data, maxLength=numSamplesMax):
     return returnVal
 
 
-# Effectively the main function...
-def update():
+####################################################
+############ INITIALIZATION FUNCTION(S) ############
+####################################################
+def init():
+    ###
+    # Open the data file or connect to the IMU
+    ###
+    global dataFile, fileLocale
+    if (inputType == "file"):
+        dataFile = open(fileLocale, "r")
+
+    ###
+    # Initialise the lists
+    ###
+    global  listRaw, listCrude, listFiltered
+    # [time, ax,  ay,  az,  gx,  gy,  gz]
+    listRaw.append(getNextData())
+
+    #                [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
+    #                  gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
+    listRawDR.append(listRaw[0][0:4] + [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] +
+                     listRaw[0][4:7] + [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+
+    listFiltered.append(listRaw[0])
+    listFilteredDR.append(listRawDR[0])
+
+    return
+
+
+####################################################
+##################### MAIN CODE ####################
+####################################################
+def main():
     global listRaw, count, sleepTime, inputType, listFiltered
     count += 1
 
@@ -157,74 +196,30 @@ def update():
         listFilteredDR.append(doDeadReckoning(listFilteredDR[-1], listFiltered[-1]))
         listFilteredDR = limitSize(listFilteredDR)
 
-# #                [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
-# listRawDR.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-#                   0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
-# #                  gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
+       # listRawDR:
+       # [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
+       #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
 
     # Plot data if appropriate
+    triplet = 4
     if (count == updateEvery):
-        gr.updatePlot(graphAccX, getCol(listFilteredDR, 13), getCol(listFilteredDR, 0))
-        gr.updatePlot(graphAccY, getCol(listFilteredDR, 14), getCol(listFilteredDR, 0))
-        gr.updatePlot(graphAccZ, getCol(listFilteredDR, 15), getCol(listFilteredDR, 0))
+        timeCol = getCol(listFilteredDR, 0)
+        gr.updatePlot(graphAccX, getCol(listFilteredDR, 1+3*triplet), timeCol)
+        gr.updatePlot(graphAccY, getCol(listFilteredDR, 2+3*triplet), timeCol)
+        gr.updatePlot(graphAccZ, getCol(listFilteredDR, 3+3*triplet), timeCol)
     count = count%updateEvery
     if (inputType == 'file'):
         time.sleep(sleepTime)
     # gr.newPlot(graphChart, getCol(listRaw, 1)[-3:-1], getCol(listRaw, 0)[-3:-1], 'g', 'r', 'b', 5, 'o')
 
 
-####################################################
-############ INITIALIZATION FUNCTION(S) ############
-####################################################
-def init():
-    ###
-    # Initialise the lists
-    ###
-    global  listRaw, listCrude, listFiltered
-    #              [time, ax,  ay,  az,  gx,  gy,  gz]
-    listRaw.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
-
-    #                [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
-    listRawDR.append([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
-    #                  gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
-
-    listFiltered.append(listRaw[0])
-    listFilteredDR.append(listRawDR[0])
-
-    ###
-    # Open the data file or connect to the IMU
-    ###
-    global dataFile, fileLocale
-    if (inputType == "file"):
-        dataFile = open(fileLocale, "r")
-
-    return
-
-
-####################################################
-##################### MAIN CODE ####################
-####################################################
 # Cannot put into a function because QtCore.QTimer() is a dick
 # Initialize the system
 init()
 
-# Acquire an initial set of data
-while True:
-
-    listRaw.append(getNextData())
-    if (listRaw[-1] == None):
-        listRaw = listRaw[:-1]
-
-    # If enough samples have been collected, do more analysis
-    if (listRaw.__len__() >= minSamples):
-        break
-    print(listRaw.__len__())
-
-
 # Update the graph data
 timer = QtCore.QTimer()
-timer.timeout.connect(update)
+timer.timeout.connect(main)
 timer.start(0)
 
 

@@ -22,13 +22,25 @@ import time
 
 class IMU(object):
 
-    def __init__(self):
+    #global iPrint
+    #iPrint = True
+
+    def __init__(self, print_text_in):
+        #########self.print_text_in = print_text_in
+        if (print_text_in == "print"):
+            self.iPrint = True
+        elif (print_text_in == "no_print"):
+            self.iPrint = False
+        else:
+            self.iPrint = True
+        #self.iPrint = iPrint
         #Create an accelerometer object
         try:
             self.spatial = Spatial()
         except RuntimeError as e:
-            print("Runtime Exception: %s" % e.details)
-            print("Exiting....")
+            if (iPrint):
+                print("Runtime Exception: %s" % e.details)
+                print("Exiting....")
             time.sleep(2)
             exit(1)
 
@@ -43,97 +55,120 @@ class IMU(object):
             self.spatial.setOnErrorhandler(self.SpatialError)
             self.spatial.setOnSpatialDataHandler(self.SpatialData)
         except PhidgetException as e:
-            print("Phidget Exception %i: %s" % (e.code, e.details))
-            print("Exiting....")
+            if (iPrint):
+                print("Phidget Exception %i: %s" % (e.code, e.details))
+                print("Exiting....")
             time.sleep(2)
             exit(1)
-
-        print("Opening phidget object....")
+        if (self.iPrint):
+            print("Opening phidget object....")
 
         try:
             self.spatial.openPhidget()
         except PhidgetException as e:
-            print("Phidget Exception %i: %s" % (e.code, e.details))
-            print("Exiting....")
+            if (self.iPrint):
+                print("Phidget Exception %i: %s" % (e.code, e.details))
+                print("Exiting....")
             time.sleep(2)
             exit(1)
 
-        print("Waiting for attach....")
+        if (self.iPrint):
+            print("Waiting for attach....")
 
         try:
             self.spatial.waitForAttach(10000)
         except PhidgetException as e:
-            print("Phidget Exception %i: %s" % (e.code, e.details))
+            if (self.iPrint):
+                print("Phidget Exception %i: %s" % (e.code, e.details))
             try:
                 self.spatial.closePhidget()
             except PhidgetException as e:
-                print("Phidget Exception %i: %s" % (e.code, e.details))
-                print("Exiting....")
+                if (self.iPrint):
+                    print("Phidget Exception %i: %s" % (e.code, e.details))
+                    print("Exiting....")
                 exit(1)
-            print("Exiting....")
+            if (self.iPrint):
+                print("Exiting....")
             time.sleep(2)
             exit(1)
         else:
             self.spatial.setDataRate(4)
             self.DisplayDeviceInfo()
 
-        print("Press Enter to quit....")
+        if (self.iPrint):
+            print("Press Enter to quit....")
 
         chr = sys.stdin.read(1)
 
-        print("Closing...")
+        if (self.iPrint):
+            print("Closing...")
 
         try:
             self.spatial.closePhidget()
         except PhidgetException as e:
-            print("Phidget Exception %i: %s" % (e.code, e.details))
-            print("Exiting....")
+            if (self.iPrint):
+                print("Phidget Exception %i: %s" % (e.code, e.details))
+                print("Exiting....")
             time.sleep(2)
             exit(1)
 
-        print("Done.")
+        if (self.iPrint):
+            print("Done.")
 
     #Information Display Function
     def DisplayDeviceInfo(self):
-        print("|------------|----------------------------------|--------------|------------|")
-        print("|- Attached -|-              Type              -|- Serial No. -|-  Version -|")
-        print("|------------|----------------------------------|--------------|------------|")
-        print("|- %8s -|- %30s -|- %10d -|- %8d -|" % (self.spatial.isAttached(), self.spatial.getDeviceName(), self.spatial.getSerialNum(), self.spatial.getDeviceVersion()))
-        print("|------------|----------------------------------|--------------|------------|")
-        print("Number of Acceleration Axes: %i" % (self.spatial.getAccelerationAxisCount()))
-        print("Number of Gyro Axes: %i" % (self.spatial.getGyroAxisCount()))
-        print("Number of Compass Axes: %i" % (self.spatial.getCompassAxisCount()))
+        if (self.iPrint):
+            print("|------------|----------------------------------|--------------|------------|")
+            print("|- Attached -|-              Type              -|- Serial No. -|-  Version -|")
+            print("|------------|----------------------------------|--------------|------------|")
+            print("|- %8s -|- %30s -|- %10d -|- %8d -|" % (self.spatial.isAttached(), self.spatial.getDeviceName(), self.spatial.getSerialNum(), self.spatial.getDeviceVersion()))
+            print("|------------|----------------------------------|--------------|------------|")
+            print("Number of Acceleration Axes: %i" % (self.spatial.getAccelerationAxisCount()))
+            print("Number of Gyro Axes: %i" % (self.spatial.getGyroAxisCount()))
+            print("Number of Compass Axes: %i" % (self.spatial.getCompassAxisCount()))
 
     #Event Handler Callback Functions
     def SpatialAttached(self, e):
         attached = e.device
-        print("Spatial %i Attached!" % (attached.getSerialNum()))
+        if (self.iPrint):
+            print("Spatial %i Attached!" % (attached.getSerialNum()))
 
     def SpatialDetached(self, e):
         detached = e.device
-        print("Spatial %i Detached!" % (detached.getSerialNum()))
+        if (self.iPrint):
+            print("Spatial %i Detached!" % (detached.getSerialNum()))
 
     def SpatialError(self, e):
         try:
             source = e.device
-            print("Spatial %i: Phidget Error %i: %s" % (source.getSerialNum(), e.eCode, e.description))
+            if (self.iPrint):
+                print("Spatial %i: Phidget Error %i: %s" % (source.getSerialNum(), e.eCode, e.description))
         except PhidgetException as e:
-            print("Phidget Exception %i: %s" % (e.code, e.details))
+            if (self.iPrint):
+                print("Phidget Exception %i: %s" % (e.code, e.details))
 
     def SpatialData(self, e):
         source = e.device
-        print("Spatial %i: Amount of data %i" % (source.getSerialNum(), len(e.spatialData)))
+        if (self.iPrint):
+            print("Spatial %i: Amount of data %i" % (source.getSerialNum(), len(e.spatialData)))
         for index, spatialData in enumerate(e.spatialData):
-            print("=== Data Set: %i ===" % (index))
+            if (self.iPrint):
+                print("=== Data Set: %i ===" % (index))
             if len(spatialData.Acceleration) > 0:
-                print("Acceleration> x: %6f  y: %6f  z: %6f" % (spatialData.Acceleration[0], spatialData.Acceleration[1], spatialData.Acceleration[2]))
+                if (self.iPrint):
+                    print("Acceleration> x: %6f  y: %6f  z: %6f" % (spatialData.Acceleration[0], spatialData.Acceleration[1], spatialData.Acceleration[2]))
             if len(spatialData.AngularRate) > 0:
-                print("Angular Rate> x: %6f  y: %6f  z: %6f" % (spatialData.AngularRate[0], spatialData.AngularRate[1], spatialData.AngularRate[2]))
+                if (self.iPrint):
+                    print("Angular Rate> x: %6f  y: %6f  z: %6f" % (spatialData.AngularRate[0], spatialData.AngularRate[1], spatialData.AngularRate[2]))
             if len(spatialData.MagneticField) > 0:
-                print("Magnetic Field> x: %6f  y: %6f  z: %6f" % (spatialData.MagneticField[0], spatialData.MagneticField[1], spatialData.MagneticField[2]))
-            print("Time Span> Seconds Elapsed: %i  microseconds since last packet: %i" % (spatialData.Timestamp.seconds, spatialData.Timestamp.microSeconds))
+                if (self.iPrint):
+                    print("Magnetic Field> x: %6f  y: %6f  z: %6f" % (spatialData.MagneticField[0], spatialData.MagneticField[1], spatialData.MagneticField[2]))
+            if (self.iPrint):
+                print("Time Span> Seconds Elapsed: %i  microseconds since last packet: %i" % (spatialData.Timestamp.seconds, spatialData.Timestamp.microSeconds))
+        if (self.iPrint):
+            print("------------------------------------------")
 
-        print("------------------------------------------")
-    print("end of object")
+    # if (self.iPrint):
+    #     print("end of object")
     #time.sleep(2)
     #exit(0)

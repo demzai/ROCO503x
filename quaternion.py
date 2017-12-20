@@ -10,12 +10,12 @@ def euler_to_quat(euler):
     :param euler: [bank, heading, attitude] Euler angles
     :rtype: list: [w,x,y,z] Quaternion
     """
-    cx = cos(euler[0] / 2)
-    cy = cos(euler[1] / 2)
-    cz = cos(euler[2] / 2)
-    sx = sin(euler[0] / 2)
-    sy = sin(euler[1] / 2)
-    sz = sin(euler[2] / 2)
+    cx = cos((euler[0] / 2)*pi/180)
+    cy = cos((euler[1] / 2)*pi/180)
+    cz = cos((euler[2] / 2)*pi/180)
+    sx = sin((euler[0] / 2)*pi/180)
+    sy = sin((euler[1] / 2)*pi/180)
+    sz = sin((euler[2] / 2)*pi/180)
 
     w = cy * cz * cx - sy * sz * sx
     x = sy * sz * cx + cy * cz * sx

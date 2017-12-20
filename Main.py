@@ -8,12 +8,14 @@ import graph as gr
 import filter as fl
 from pyqtgraph.Qt import QtCore
 import time
+import Spatial_simple_cl as spatialC
+import time
 
 
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-inputType = "file"
+inputType = "live"
 fileLocale = "IMU_Stationary.txt"
 sleepTime = 0.0001
 numSamplesMax = 100
@@ -48,21 +50,27 @@ def getNextData():
     :param type: Determines whether the function tries to read from a file or directly from an IMU
     :return:
     """
-    global inputType
+    global inputType, imuObj
     if (inputType == "file"):
         # Considered an array of chars, so [:-1] removes the last character
         data = dataFile.readline()[:-1]
 
-    else:
+    elif (inputType == "live"):
         # @todo get input directly from the IMU
-        return None
-
+        while (imuObj.dataReady == False):
+            pass
+        if (imuObj.dataReady):
+            data = imuObj.getData()
+    else:
+        print("Error: invalid input type specified. Please set either \"file\" or \"live\"")
     # Try to convert the data into an array of floats
     # This should only fail if the package is corrupt
-    try:
-        data = [float(i) for i in data.split(",")]
-    except:
-        data = None
+    if (inputType == "file"):
+        try:
+            data = [float(i) for i in data.split(",")]
+        except:
+            data = None
+    print(data)
     return data
 
 
@@ -107,7 +115,7 @@ def doDeadReckoning(prevComplete, raw):
     currQuat = [complete[16], complete[17], complete[18], complete[19]]
     dcm = np.array(qt.quat_to_dcm(currQuat))
     acc = np.array([raw[1], raw[2], raw[3]]).transpose()
-    acc = dcm.dot(acc)
+    acc = dcm.dot(acc)*9.81
 
 
     # Update the acceleration, velocity & position info
@@ -116,7 +124,7 @@ def doDeadReckoning(prevComplete, raw):
         complete[i+1] = acc[i]
         # Subtract gravity
         if (i == 2):
-            acc[i] -= 1
+            acc[i] -= 9.81
         # Position += u*t + 0.5*a*t^2
         complete[i+7] += (complete[i+4] + 0.5*acc[i]*delTime) * delTime
         # Velocity += a*t
@@ -147,9 +155,14 @@ def init():
     ###
     # Open the data file or connect to the IMU
     ###
-    global dataFile, fileLocale
+    global dataFile, fileLocale, imuObj
     if (inputType == "file"):
         dataFile = open(fileLocale, "r")
+    elif (inputType == "live"):
+        imuObj = spatialC.IMU('some')
+        time.sleep(1)
+
+
 
     ###
     # Initialise the lists
@@ -196,12 +209,20 @@ def main():
         listFilteredDR.append(doDeadReckoning(listFilteredDR[-1], listFiltered[-1]))
         listFilteredDR = limitSize(listFilteredDR)
 
-       # listRawDR:
-       # [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
-       #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
-
+        # listRawDR:
+        #  [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
+        #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
+        """
+        set triplet to:
+        acceleration = 0
+        velocity = 1
+        position = 2
+        angular velocity = 3
+        angular position = 4
+        quaternion = 5
+        """
     # Plot data if appropriate
-    triplet = 4
+    triplet = 0
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)
         gr.updatePlot(graphAccX, getCol(listFilteredDR, 1+3*triplet), timeCol)
@@ -209,6 +230,8 @@ def main():
         gr.updatePlot(graphAccZ, getCol(listFilteredDR, 3+3*triplet), timeCol)
     count = count%updateEvery
     if (inputType == 'file'):
+        time.sleep(sleepTime)
+    if (inputType == 'live'):
         time.sleep(sleepTime)
     # gr.newPlot(graphChart, getCol(listRaw, 1)[-3:-1], getCol(listRaw, 0)[-3:-1], 'g', 'r', 'b', 5, 'o')
 

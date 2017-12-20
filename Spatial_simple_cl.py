@@ -19,8 +19,7 @@ from Phidgets.Events.Events import SpatialDataEventArgs, AttachEventArgs, Detach
 from Phidgets.Devices.Spatial import Spatial, SpatialEventData, TimeSpan
 from Phidgets.Phidget import PhidgetLogLevel
 import time
-from datetime import datetime
-from datetime import timedelta
+
 
 
 
@@ -30,8 +29,6 @@ class IMU(object):
     #iPrint = True
 
     def __init__(self, print_text_in):
-
-        self.start_time = datetime.now()
 
         self.dataList = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -113,24 +110,25 @@ class IMU(object):
 
         if (self.iDebug):
             print("Press Enter to quit....")
+        """
+        # This is how the phidget used to shut down when enter was pressed. Find a way to re-integrate this!
+        chr = sys.stdin.read(1)
 
-        #chr = sys.stdin.read(1)
-        #
-        # if (self.iDebug):
-        #     print("Closing...")
-        #
-        # try:
-        #     self.spatial.closePhidget()
-        # except PhidgetException as e:
-        #     if (self.iDebug):
-        #         print("Phidget Exception %i: %s" % (e.code, e.details))
-        #         print("Exiting....")
-        #     time.sleep(2)
-        #     exit(1)
-        #
-        # if (self.iDebug):
-        #     print("Done.")
+        if (self.iDebug):
+            print("Closing...")
 
+        try:
+            self.spatial.closePhidget()
+        except PhidgetException as e:
+            if (self.iDebug):
+                print("Phidget Exception %i: %s" % (e.code, e.details))
+                print("Exiting....")
+            time.sleep(2)
+            exit(1)
+
+        if (self.iDebug):
+            print("Done.")
+        """
     #Information Display Function
     def DisplayDeviceInfo(self):
         if (self.iDebug):
@@ -191,9 +189,14 @@ class IMU(object):
             self.dataList[0] = float(self.truncate(seconds, 5))
         if (self.iPrint):
             print("------------------------------------------")
+        self.dataReady = True
 
     def getData(self):
-        return self.dataList
+        if (self.dataReady):
+            self.dataReady = False
+            return self.dataList
+
+
 
     def truncate(self, f, n):
         '''Truncates/pads a float f to n decimal places without rounding'''

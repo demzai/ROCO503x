@@ -6,4 +6,4 @@ from pyqtgraph.Qt import QtCore
 import time
 import Spatial_simple_cl as spatialC
 
-imuObj = spatialC.IMU('no_print')
+imuObj = spatialC.IMU('print')

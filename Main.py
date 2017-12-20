@@ -39,10 +39,33 @@ listFiltered = []
 listFilteredDR = []
 count = 0
 
+####################################################
+############## CALIBRATION CONSTANTS ###############
+####################################################
+
+vCalX = -0.7# * 10**-9
+vCalY = -0.6#6.0 * 10**-9
+vCalZ = -0.8#8.0 * 10**-9
+
+
+vCalX = -0.35# * 10**-9
+vCalY = -0.3#6.0 * 10**-9
+vCalZ = -0.45#8.0 * 10**-9
+#
+# vCalX = -0.0# * 10**-9
+# vCalY = -0.0#6.0 * 10**-9
+# vCalZ = -0.0#8.0 * 10**-9
+
 
 ####################################################
 ################# CUSTOM FUNCTIONS #################
 ####################################################
+def applyCalibration(data):
+    data[4] -= vCalX
+    data[5] -= vCalY
+    data[6] -= vCalZ
+    return data
+
 # Retrieve the next input of raw data
 def getNextData():
     """
@@ -61,6 +84,7 @@ def getNextData():
             pass
         if (imuObj.dataReady):
             data = imuObj.getData()
+            #data = applyCalibration(data)
     else:
         print("Error: invalid input type specified. Please set either \"file\" or \"live\"")
     # Try to convert the data into an array of floats
@@ -70,8 +94,11 @@ def getNextData():
             data = [float(i) for i in data.split(",")]
         except:
             data = None
+
     print(data)
     return data
+
+
 
 
 # Perform dead reckoning on the provided raw data
@@ -222,7 +249,7 @@ def main():
         quaternion = 5
         """
     # Plot data if appropriate
-    triplet = 0
+    triplet = 3
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)
         gr.updatePlot(graphAccX, getCol(listFilteredDR, 1+3*triplet), timeCol)

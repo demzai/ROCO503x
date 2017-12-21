@@ -6,7 +6,6 @@ import quaternion as qt
 import graph as gr
 import filter as fl
 from pyqtgraph.Qt import QtCore
-import time
 import Spatial_simple_cl as spatialC
 import time
 #from math import *
@@ -14,11 +13,10 @@ import time
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-inputType = "live"
+inputType = "file"
 fileLocale = "IMU_Stationary.txt"
 sleepTime = 0.0001
 numSamplesMax = 100
-minSamples = 10
 graphWindow = gr.newWindow("Graphs", 640, 480)
 graphChart = gr.newGraph(graphWindow, "Test")
 graphAccX = gr.newPlot(graphChart, [], [], 'r', None, None, 3, 'o')
@@ -41,28 +39,23 @@ dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial ori
 ####################################################
 ############## CALIBRATION CONSTANTS ###############
 ####################################################
-
-vCalX = -0.7# * 10**-9
-vCalY = -0.6#6.0 * 10**-9
-vCalZ = -0.8#8.0 * 10**-9
-
-
-vCalX = -0.35# * 10**-9
-vCalY = -0.3#6.0 * 10**-9
-vCalZ = -0.45#8.0 * 10**-9
-#
-# vCalX = -0.0# * 10**-9
-# vCalY = -0.0#6.0 * 10**-9
-# vCalZ = -0.0#8.0 * 10**-9
+calGyroOffset  = [-0.35, -0.3, -0.45]
+calAccelOffset = [0.0, 0.0, 0.0]
+calAccelScale  = [1.0, 1.0, 1.0]
 
 
 ####################################################
 ################# CUSTOM FUNCTIONS #################
 ####################################################
+# Apply scaling and offset factors
 def applyCalibration(data):
-    data[4] -= vCalX
-    data[5] -= vCalY
-    data[6] -= vCalZ
+    for i in range(0, 3):
+        # Offset then scale accelerometer values
+        data[i+1] -= calAccelOffset[i]
+        data[i+1] /= calAccelScale[i]
+
+        # Offset the gyroscope values
+        data[i+4] -= calGyroOffset[i]
     return data
 
 # Retrieve the next input of raw data
@@ -112,11 +105,11 @@ def getRotationMatrix(x, y, z):
     return rot.tolist()
 
 
-def integrateGyro(prevData, currData):
-    delTime = currData[0] - prevData[0]
+# Update the orientation estimation
+def integrateGyro(prevOrientation, gyroData, delTime):
     returnList = []
     for i in range(0, 3):
-        returnList += [prevData[i + 13] + currData[i + 4] * delTime]  # Theta += Gyro * time
+        returnList += [prevOrientation[i] + gyroData[i] * delTime]  # Theta += Gyro * time
     return returnList
 
 
@@ -130,7 +123,7 @@ def doDeadReckoning(prevComplete, raw):
     complete[0] = raw[0]
 
     # Update the Euler orientation
-    orientation = integrateGyro(prevComplete, raw)
+    orientation = integrateGyro(prevComplete[13:16], raw[4:7], delTime)
     for i in range(0, 3):
         complete[i + 10] = raw[i + 4]
         complete[i + 13] = orientation[i]

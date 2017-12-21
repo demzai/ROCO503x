@@ -9,7 +9,7 @@ class SmartFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 def validate(args):
-    if args.calibrate:
+    if (args.calibrate or args.accelCalibrate):
         if args.durationTime < 5:
             if args.durationTime == 1:
                 print"Duration is only", args.durationTime, "second"
@@ -66,6 +66,17 @@ class commandline_argument_parser(object):
 
         self.parser.add_argument('-c', '--calibrate', action='store_const', const=True, default=False, dest='calibrate',
                             help='call this flag to perform calibration of the IMU\ndefault=%(default)s')
+
+        self.parser.add_argument('-a', '--accelCalibrate', type=int, default=0, metavar='\b', dest='accelCalibrate',
+                            help="R|call this flag to perform calibration of the accelerometer on the IMU\n"
+                            "1 = X\n"
+                            "2 = Y\n"
+                            "3 = Z\n"
+                            "4 = -X\n"
+                            "5 = -Y\n"
+                            "6 = -Z\n"
+                            "0 = don't calibrate\n"
+                            "default=%(default)s")
         self.parser.add_argument('-s', '--start', nargs='?', type=int, default=4, dest='startTime', help='Please enter an integer start time for the calibration routine in seconds')
         #self.parser.add_argument('-e', '--end', nargs='?', type=int, action=self.endTimeAction, default=10, dest='endTime', help='Please enter an integer end time for the calibration routine in seconds')
         self.parser.add_argument('-d', '--duration', nargs='?', type=int, default=10, dest='durationTime', help='Please enter an integer end time for the calibration routine in seconds')

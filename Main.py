@@ -8,8 +8,9 @@ import filter as fl
 from pyqtgraph.Qt import QtCore
 import time
 import time
-import sys
+import sys, signal, os
 import argument_parser
+import pickle
 clp = argument_parser.commandline_argument_parser()
 args = clp.parser.parse_args()
 
@@ -45,34 +46,50 @@ listRawDR = []
 listFiltered = []
 listFilteredDR = []
 count = 0
+aCount = 0
 dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial orientation!
 
 ####################################################
 ############## CALIBRATION CONSTANTS ###############
 ####################################################
 
-vCalX = -0.7# * 10**-9
-vCalY = -0.6#6.0 * 10**-9
-vCalZ = -0.8#8.0 * 10**-9
-
-
-vCalX = -0.35# * 10**-9
-vCalY = -0.3#6.0 * 10**-9
-vCalZ = -0.45#8.0 * 10**-9
-#
-# vCalX = -0.0# * 10**-9
-# vCalY = -0.0#6.0 * 10**-9
-# vCalZ = -0.0#8.0 * 10**-9
-
+calV = [0,0,0]
 
 ####################################################
 ################# CUSTOM FUNCTIONS #################
 ####################################################
-def applyCalibration(data):
-    data[4] -= vCalX
-    data[5] -= vCalY
-    data[6] -= vCalZ
+def applyCalibration(data, calibration_variables):
+    cnt = 0
+    for item in calibration_variables:
+        data[cnt+4] -= calibration_variables[cnt]
+        cnt += 1
     return data
+
+def read_calibration_file():
+    file = open('calibration.txt', 'rb')
+    calibration_variables = pickle.load(file)
+    file.close()
+    return calibration_variables
+
+def collect_calibration(data):
+    global start, aCount, calV, args
+    time_esapsed = time.time() - start
+    if (time_esapsed > args.startTime):
+        aCount += 1
+        calV[0] += data[4]
+        calV[1] += data[5]
+        calV[2] += data[6]
+    if (time_esapsed > args.endTime):
+        calV[0] = calV[0] / aCount
+        calV[1] = calV[1] / aCount
+        calV[2] = calV[2] / aCount
+        print "Vx", calV[0]
+        print "Vy", calV[1]
+        print "Vz", calV[2]
+        pickle.dump(calV, open("calibration.txt", "wb"))
+        close_nicely()
+
+
 
 # Retrieve the next input of raw data
 def getNextData():
@@ -81,7 +98,7 @@ def getNextData():
     :param type: Determines whether the function tries to read from a file or directly from an IMU
     :return:
     """
-    global inputType, imuObj
+    global inputType, imuObj, calibration_variables
     if (inputType == "file"):
         # Considered an array of chars, so [:-1] removes the last character
         data = dataFile.readline()[:-1]
@@ -92,7 +109,8 @@ def getNextData():
             pass
         if (imuObj.dataReady):
             data = imuObj.getData()
-            #data = applyCalibration(data)
+            if not args.calibrate:
+                data = applyCalibration(data, calibration_variables)
     else:
         print("Error: invalid input type specified. Please set either \"file\" or \"live\"")
     # Try to convert the data into an array of floats
@@ -103,6 +121,8 @@ def getNextData():
         except:
             data = None
 
+    if (args.calibrate):
+        collect_calibration(data)
     print(data)
     return data
 
@@ -194,14 +214,41 @@ def limitSize(data, maxLength=numSamplesMax):
         returnVal = returnVal[-maxLength:]
     return returnVal
 
+def close_nicely():
+    global imuObj
+    # close down sockets before exiting
+    imuObj.stopIMU()
+    os.system('stty sane')
+    sys.exit(0)
+
+def handle_ctrl_c(signal, frame):
+    close_nicely()
+    #sys.exit(130) # 130 is standard exit code for ctrl-c
+
 
 ####################################################
 ############ INITIALIZATION FUNCTION(S) ############
 ####################################################
 def init():
+    global start, calibration_variables
+    start = time.time()
+    if not args.calibrate:
+        calibration_variables = read_calibration_file()
+    else:
+        duration = args.endTime - args.startTime
+        print "Entering calibration mode. Please try and isolate the IMU from noise and vibrations."
+        print "Calibration data will be saved to calibration.txt in the local directory, and will be automatically applied the next time you run this program without the calibration flag."
+        if duration == 1:
+            print "Calibration will start at t =", args.startTime, "seconds and finish at t =", args.endTime, "seconds, covering a duration of", duration, "second."
+        else:
+            print "Calibration will start at t =", args.startTime, "seconds and finish at t =", args.endTime, "seconds, covering a duration of", duration, "seconds."
+        print "Please press enter when ready."
+        chr = sys.stdin.read(1)
+
     ###
     # Open the data file or connect to the IMU
     ###
+    signal.signal(signal.SIGINT, handle_ctrl_c)
     global dataFile, fileLocale, imuObj
     if (inputType == "file"):
         dataFile = open(fileLocale, "r")
@@ -273,7 +320,10 @@ def main():
         quaternion = 5
         """
     # Plot data if appropriate
-    triplet = args.triplet
+    if args.calibrate:
+        triplet=3
+    else:
+        triplet = args.triplet
 
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)

@@ -107,10 +107,10 @@ class IMU(object):
         else:
             self.spatial.setDataRate(4)
             self.DisplayDeviceInfo()
-
+        """
         if (self.iDebug):
             print("Press Enter to quit....")
-        """
+        
         # This is how the phidget used to shut down when enter was pressed. Find a way to re-integrate this!
         chr = sys.stdin.read(1)
 
@@ -140,6 +140,7 @@ class IMU(object):
             print("Number of Acceleration Axes: %i" % (self.spatial.getAccelerationAxisCount()))
             print("Number of Gyro Axes: %i" % (self.spatial.getGyroAxisCount()))
             print("Number of Compass Axes: %i" % (self.spatial.getCompassAxisCount()))
+
     def stopIMU(self):
 
         if (self.iDebug):

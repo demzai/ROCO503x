@@ -12,6 +12,7 @@ import argument_parser
 import pickle
 clp = argument_parser.commandline_argument_parser()
 args = clp.parser.parse_args()
+argument_parser.validate(args)
 
 
 ####################################################
@@ -34,6 +35,8 @@ graphAccY = gr.newPlot(graphChart, [], [], 'g', None, None, 3, 'o')
 graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 updateEvery = 10
 cutoffFrequency = [20, 5]  # [Accel Low Pass, Gyro High Pass]
+
+
 
 ####################################################
 ################# GLOBAL VARIABLES #################
@@ -87,19 +90,21 @@ def read_calibration_file():
 def collect_calibration(data):
     global start, calibCount, calV, args
     time_esapsed = time.time() - start
+    print "start time", args.startTime
+    print "end time", args.startTime + args.durationTime
     if (time_esapsed > args.startTime):
         calibCount += 1
-        calV[0] += data[4]
-        calV[1] += data[5]
-        calV[2] += data[6]
-    if (time_esapsed > args.endTime):
-        calV[0] = calV[0] / calibCount
-        calV[1] = calV[1] / calibCount
-        calV[2] = calV[2] / calibCount
-        print "Vx", calV[0]
-        print "Vy", calV[1]
-        print "Vz", calV[2]
-        pickle.dump(calV, open("calibration.txt", "wb"))
+        calGyroOffset[0] += data[4]
+        calGyroOffset[1] += data[5]
+        calGyroOffset[2] += data[6]
+    if (time_esapsed > args.startTime + args.durationTime):
+        calGyroOffset[0] = calGyroOffset[0] / calibCount
+        calGyroOffset[1] = calGyroOffset[1] / calibCount
+        calGyroOffset[2] = calGyroOffset[2] / calibCount
+        print "Vx", calGyroOffset[0]
+        print "Vy", calGyroOffset[1]
+        print "Vz", calGyroOffset[2]
+        pickle.dump(calGyroOffset, open("calibration.txt", "wb"))
         close_nicely()
 
 
@@ -156,7 +161,8 @@ def limitSize(data, maxLength=numSamplesMax):
 def close_nicely():
     global imuObj
     # close down sockets before exiting
-    imuObj.stopIMU()
+    if (inputType == "live"):
+        imuObj.stopIMU()
     os.system('stty sane')
     sys.exit(0)
 
@@ -173,20 +179,23 @@ def handle_ctrl_c(signal, frame):
 def init():
     #Initialize start time variable, IMU object and any input files
     global start, calibration_variables, dataFile, fileLocale, imuObj
-    #Remember start time so that we can calculate durations later
-    start = time.time()
+
     #If we're not in calibration mode, apply the last calibration values
     if not args.calibrate:
         calibration_variables = read_calibration_file()
+        print "Applying calibration from file. If you wish to re-run calibration, please call this program with -c or --calibrate."
+        print "Please press enter when ready."
+        # Press enter to continue
+        chr = sys.stdin.read(1)
     #If we are in calibration mode...
     else:
-        duration = args.endTime - args.startTime
+        duration = args.durationTime
         print "Entering calibration mode. Please try and isolate the IMU from noise and vibrations."
         print "Calibration data will be saved to calibration.txt in the local directory, and will be automatically applied the next time you run this program without the calibration flag."
         if duration == 1:
-            print "Calibration will start at t =", args.startTime, "seconds and finish at t =", args.endTime, "seconds, covering a duration of", duration, "second."
+            print "Calibration will start at t =", args.startTime, "seconds and finish at t =", args.startTime + args.durationTime, "seconds, covering a duration of", duration, "second."
         else:
-            print "Calibration will start at t =", args.startTime, "seconds and finish at t =", args.endTime, "seconds, covering a duration of", duration, "seconds."
+            print "Calibration will start at t =", args.startTime, "seconds and finish at t =", args.startTime + args.durationTime, "seconds, covering a duration of", duration, "seconds."
         print "Please press enter when ready."
         #Press enter to continue
         chr = sys.stdin.read(1)
@@ -198,11 +207,14 @@ def init():
     ###
     # Open the data file or connect to the IMU
     ###
+
     if (inputType == "file"):
         dataFile = open(fileLocale, "r")
     elif (inputType == "live"):
         imuObj = spatialC.IMU('some')
         time.sleep(1)
+    # Remember start time so that we can calculate durations later
+    start = time.time()
     ###
     # Initialise the lists
     ###

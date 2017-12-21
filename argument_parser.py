@@ -8,24 +8,36 @@ class SmartFormatter(argparse.HelpFormatter):
         # this is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-class commandline_argument_parser(object):
+def validate(args):
+    if args.calibrate:
+        if args.durationTime < 5:
+            if args.durationTime == 1:
+                print"Duration is only", args.durationTime, "second"
+            else:
+                print"Duration is only", args.durationTime, "seconds"
+            print "It is recommended that you re-run this script with a longer duration. Calibration data generated on this run may not be very useful"
+            print "Press enter to continue, or ctrl+c to quit"
+            chr = sys.stdin.read(1)
 
-    class endTimeAction(argparse.Action):
+        if args.startTime < 4:
+            if args.startTime == 1:
+                print "You have requested calibration to start at", args.startTime, "second"
+            else:
+                print "You have requested calibration to start at", args.startTime, "seconds"
+            print "It is recommended that you choose a start time of at least four seconds. Calibration data generated on this run will be inaccurate"
+            print "Press enter to continue, or ctrl+c to quit"
+            chr = sys.stdin.read(1)
+
+
+class commandline_argument_parser(object):
+    class durationAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
-            if values < namespace.startTime:
-                print("End time cannot be lower than start time. Setting end time to start time...")
-                print "Start time = ", namespace.startTime
-                values = namespace.startTime
-                print "End time = ", values
-                print "It is recommended that you re-run this script with correct start and end times. Calibration data generated on this run will be useless"
-                chr = sys.stdin.read(1)
-            if values < (namespace.startTime + 3):
-                duration = values - namespace.startTime
-                if duration == 1:
-                    print "You have requested a calibration duration of", duration, "second"
+            if values < 5:
+                if values == 1:
+                    print"Duration is only", values, "second"
                 else:
-                    print "You have requested a calibration duration of",duration,"seconds"
-                print "It is recommended that you re-run this script with a larger duration. Calibration data generated on this run may not be very useful"
+                    print"Duration is only", values, "seconds"
+                print "It is recommended that you re-run this script with a longer duration. Calibration data generated on this run may not be very useful"
                 print "Press enter to continue, or ctrl+c to quit"
                 chr = sys.stdin.read(1)
             setattr(namespace, self.dest, values)
@@ -43,16 +55,20 @@ class commandline_argument_parser(object):
                 chr = sys.stdin.read(1)
             setattr(namespace, self.dest, values)
 
+
+
     def __init__(self):
         self.parser = argparse.ArgumentParser(description='IMU filtering program for ROCO503. All command-line arguments are optional.', formatter_class=SmartFormatter)
 
         self.parser.add_argument('-l', '--live', metavar='Data source', action='store_const', const="live", default='file', dest='dataSource',
                             help='R|call this flag to tell %(prog)s to use live data \ninstead of a file\ndefault=%(default)s')
+
+
         self.parser.add_argument('-c', '--calibrate', action='store_const', const=True, default=False, dest='calibrate',
                             help='call this flag to perform calibration of the IMU\ndefault=%(default)s')
-        self.parser.add_argument('-s', '--start', nargs='?', type=int, action=self.startTimeAction, default=4, dest='startTime')
-        self.parser.add_argument('-e', '--end', nargs='?', type=int, action=self.endTimeAction, default=10, dest='endTime')
-
+        self.parser.add_argument('-s', '--start', nargs='?', type=int, default=4, dest='startTime', help='Please enter an integer start time for the calibration routine in seconds')
+        #self.parser.add_argument('-e', '--end', nargs='?', type=int, action=self.endTimeAction, default=10, dest='endTime', help='Please enter an integer end time for the calibration routine in seconds')
+        self.parser.add_argument('-d', '--duration', nargs='?', type=int, default=10, dest='durationTime', help='Please enter an integer end time for the calibration routine in seconds')
         self.parser.add_argument('-g', '--graph', metavar='\b', dest='triplet', default='0', type=int, action='store',
                 help="R|    choose what data you would like to graph:\n"
                 "acceleration = 0\n"
@@ -62,7 +78,7 @@ class commandline_argument_parser(object):
                 "angular position = 4\n"
                 "quaternion = 5\ndefault=%(default)s")
 
-        self.parser.add_argument('-f', '--file', nargs='?', default="IMU_Stationary.txt", dest='fileLocation',
+        self.parser.add_argument('-f', '--file', nargs='?', default="IMU_Stationary.txt", const="IMU_Stationary.txt", dest='fileLocation',
                                  help="R|use this to set the file location, either by \nspecifying a local file" 
                                       "(e.g. data.txt) or a full path \n(e.g. /home/user/data.txt)\n(not tested"
                                       "on windows yet) \ndefault=%(default)s'")

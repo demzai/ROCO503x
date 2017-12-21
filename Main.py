@@ -13,6 +13,7 @@ import pickle
 clp = argument_parser.commandline_argument_parser()
 args = clp.parser.parse_args()
 
+
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
@@ -55,7 +56,6 @@ calAccelScale  = [1.0, 1.0, 1.0]
 calV = [0,0,0]
 
 
-
 ####################################################
 ################# CUSTOM FUNCTIONS #################
 ####################################################
@@ -69,6 +69,7 @@ def DemiapplyCalibration(data):
         # Offset the gyroscope values
         data[i+4] -= calGyroOffset[i]
     return data
+
 
 def applyCalibration(data, calibration_variables):
     cnt = 0
@@ -101,6 +102,7 @@ def collect_calibration(data):
         pickle.dump(calV, open("calibration.txt", "wb"))
         close_nicely()
 
+
 # Retrieve the next input of raw data
 def getNextData():
     """
@@ -130,6 +132,7 @@ def getNextData():
             data = [float(i) for i in data.split(",")]
         except:
             data = None
+
     if (args.calibrate):
         collect_calibration(data)
     print(data)
@@ -150,7 +153,6 @@ def limitSize(data, maxLength=numSamplesMax):
         returnVal = returnVal[-maxLength:]
     return returnVal
 
-
 def close_nicely():
     global imuObj
     # close down sockets before exiting
@@ -161,6 +163,7 @@ def close_nicely():
 def handle_ctrl_c(signal, frame):
     close_nicely()
     #sys.exit(130) # 130 is standard exit code for ctrl-c
+
 
 
 
@@ -188,11 +191,13 @@ def init():
         #Press enter to continue
         chr = sys.stdin.read(1)
 
+
+    #This line tells python to call the 'handle_ctrl_c' function if control+c is pressed (allows us to exit nicely)
+    signal.signal(signal.SIGINT, handle_ctrl_c)
+
     ###
     # Open the data file or connect to the IMU
     ###
-    #This line tells python to call the 'handle_ctrl_c' function if control+c is pressed (allows us to exit nicely)
-    signal.signal(signal.SIGINT, handle_ctrl_c)
     if (inputType == "file"):
         dataFile = open(fileLocale, "r")
     elif (inputType == "live"):

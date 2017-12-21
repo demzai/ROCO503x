@@ -7,15 +7,24 @@ import graph as gr
 import filter as fl
 from pyqtgraph.Qt import QtCore
 import time
-import Spatial_simple_cl as spatialC
 import time
-#from math import *
+import sys
+import argument_parser
+clp = argument_parser.commandline_argument_parser()
+args = clp.parser.parse_args()
+
 
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-inputType = "live"
-fileLocale = "IMU_Stationary.txt"
+inputType = args.dataSource
+print "Input type:",inputType
+if (inputType == "live"):
+    import Spatial_simple_cl as spatialC
+#fileLocale = "IMU_Stationary.txt"
+fileLocale = args.fileLocation
+print "File location:",fileLocale
+
 sleepTime = 0.0001
 numSamplesMax = 100
 minSamples = 10
@@ -264,7 +273,7 @@ def main():
         quaternion = 5
         """
     # Plot data if appropriate
-    triplet = 3
+    triplet = args.triplet
 
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)

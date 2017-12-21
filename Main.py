@@ -7,14 +7,23 @@ import filter as fl
 from pyqtgraph.Qt import QtCore
 import time
 import dead_reckoning as dr
+import sys, signal, os
+import argument_parser
+import pickle
+clp = argument_parser.commandline_argument_parser()
+args = clp.parser.parse_args()
 
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-inputType = "file"
+inputType = args.dataSource
+print "Input type:",inputType
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "IMU_Stationary.txt"
+#fileLocale = "IMU_Stationary.txt"
+fileLocale = args.fileLocation
+print "File location:",fileLocale
+
 sleepTime = 0.0001
 numSamplesMax = 100
 graphWindow = gr.newWindow("Graphs", 640, 480)
@@ -34,6 +43,7 @@ listRawDR = []
 listFiltered = []
 listFilteredDR = []
 count = 0
+calibCount = 0
 dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial orientation!
 
 ####################################################
@@ -42,13 +52,15 @@ dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial ori
 calGyroOffset  = [-0.35, -0.3, -0.45]
 calAccelOffset = [0.0, 0.0, 0.0]
 calAccelScale  = [1.0, 1.0, 1.0]
+calV = [0,0,0]
+
 
 
 ####################################################
 ################# CUSTOM FUNCTIONS #################
 ####################################################
 # Apply scaling and offset factors
-def applyCalibration(data):
+def DemiapplyCalibration(data):
     for i in range(0, 3):
         # Offset then scale accelerometer values
         data[i+1] -= calAccelOffset[i]
@@ -58,6 +70,37 @@ def applyCalibration(data):
         data[i+4] -= calGyroOffset[i]
     return data
 
+def applyCalibration(data, calibration_variables):
+    cnt = 0
+    for item in calibration_variables:
+        data[cnt+4] -= calibration_variables[cnt]
+        cnt += 1
+    return data
+
+def read_calibration_file():
+    file = open('calibration.txt', 'rb')
+    calibration_variables = pickle.load(file)
+    file.close()
+    return calibration_variables
+
+def collect_calibration(data):
+    global start, calibCount, calV, args
+    time_esapsed = time.time() - start
+    if (time_esapsed > args.startTime):
+        calibCount += 1
+        calV[0] += data[4]
+        calV[1] += data[5]
+        calV[2] += data[6]
+    if (time_esapsed > args.endTime):
+        calV[0] = calV[0] / calibCount
+        calV[1] = calV[1] / calibCount
+        calV[2] = calV[2] / calibCount
+        print "Vx", calV[0]
+        print "Vy", calV[1]
+        print "Vz", calV[2]
+        pickle.dump(calV, open("calibration.txt", "wb"))
+        close_nicely()
+
 # Retrieve the next input of raw data
 def getNextData():
     """
@@ -65,7 +108,7 @@ def getNextData():
     :param type: Determines whether the function tries to read from a file or directly from an IMU
     :return:
     """
-    global inputType, imuObj
+    global inputType, imuObj, calibration_variables
     if (inputType == "file"):
         # Considered an array of chars, so [:-1] removes the last character
         data = dataFile.readline()[:-1]
@@ -76,7 +119,8 @@ def getNextData():
             pass
         if (imuObj.dataReady):
             data = imuObj.getData()
-            #data = applyCalibration(data)
+            if not args.calibrate:
+                data = applyCalibration(data, calibration_variables)
     else:
         print("Error: invalid input type specified. Please set either \"file\" or \"live\"")
     # Try to convert the data into an array of floats
@@ -86,7 +130,8 @@ def getNextData():
             data = [float(i) for i in data.split(",")]
         except:
             data = None
-
+    if (args.calibrate):
+        collect_calibration(data)
     print(data)
     return data
 
@@ -106,22 +151,53 @@ def limitSize(data, maxLength=numSamplesMax):
     return returnVal
 
 
+def close_nicely():
+    global imuObj
+    # close down sockets before exiting
+    imuObj.stopIMU()
+    os.system('stty sane')
+    sys.exit(0)
+
+def handle_ctrl_c(signal, frame):
+    close_nicely()
+    #sys.exit(130) # 130 is standard exit code for ctrl-c
+
+
+
 ####################################################
 ############ INITIALIZATION FUNCTION(S) ############
 ####################################################
 def init():
+    #Initialize start time variable, IMU object and any input files
+    global start, calibration_variables, dataFile, fileLocale, imuObj
+    #Remember start time so that we can calculate durations later
+    start = time.time()
+    #If we're not in calibration mode, apply the last calibration values
+    if not args.calibrate:
+        calibration_variables = read_calibration_file()
+    #If we are in calibration mode...
+    else:
+        duration = args.endTime - args.startTime
+        print "Entering calibration mode. Please try and isolate the IMU from noise and vibrations."
+        print "Calibration data will be saved to calibration.txt in the local directory, and will be automatically applied the next time you run this program without the calibration flag."
+        if duration == 1:
+            print "Calibration will start at t =", args.startTime, "seconds and finish at t =", args.endTime, "seconds, covering a duration of", duration, "second."
+        else:
+            print "Calibration will start at t =", args.startTime, "seconds and finish at t =", args.endTime, "seconds, covering a duration of", duration, "seconds."
+        print "Please press enter when ready."
+        #Press enter to continue
+        chr = sys.stdin.read(1)
+
     ###
     # Open the data file or connect to the IMU
     ###
-    global dataFile, fileLocale, imuObj
+    #This line tells python to call the 'handle_ctrl_c' function if control+c is pressed (allows us to exit nicely)
+    signal.signal(signal.SIGINT, handle_ctrl_c)
     if (inputType == "file"):
         dataFile = open(fileLocale, "r")
     elif (inputType == "live"):
         imuObj = spatialC.IMU('some')
         time.sleep(1)
-
-
-
     ###
     # Initialise the lists
     ###
@@ -184,7 +260,10 @@ def main():
         quaternion = 5
         """
     # Plot data if appropriate
-    triplet = 3
+    if args.calibrate:
+        triplet=3
+    else:
+        triplet = args.triplet
 
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)

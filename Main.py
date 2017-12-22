@@ -7,8 +7,8 @@ import filter as fl
 from pyqtgraph.Qt import QtCore
 import time
 import dead_reckoning as dr
-from math import *
 import quaternion as qt
+import complementary_filter as cf
 
 ####################################################
 ################# GLOBAL CONSTANTS #################
@@ -25,7 +25,7 @@ graphAccY = gr.newPlot(graphChart, [], [], 'g', None, None, 3, 'o')
 graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 updateEvery = 10
 cutoffFrequency = [20, 5]  # [Accel Low Pass, Gyro High Pass]
-startTime = 1
+startTime = 1.0
 
 ####################################################
 ################# GLOBAL VARIABLES #################
@@ -110,39 +110,52 @@ def init():
         time.sleep(1)
 
     ###
-    # Initialise orientation
+    # Remove noisy start to filtered data
     ###
-    # Scrap data until the start time
-    # [time, ax,  ay,  az,  gx,  gy,  gz]
+    global listRaw, listRawDR, listFiltered, listFilteredDR
     while True:
-        tempList = getNextData()
-        if(tempList[0] > startTime):
+        # Get raw data
+        # [time, ax,  ay,  az,  gx,  gy,  gz]
+        nextData = getNextData()
+        listRaw.append(nextData)
+        listRaw = limitSize(listRaw)
+
+        # Get filtered data
+        if (nextData != None):
+            listFiltered.append([listRaw[-1][0]] +
+                                fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', cutoffFrequency[0], 4]) +
+                                fl.filterData(listRaw, [4, 5, 6], ['butter', 'high', cutoffFrequency[1], 4])
+                                )
+
+            listFiltered = limitSize(listFiltered)
+
+        else:
+            listRaw = listRaw[:-1]
+
+        if (listRaw[-1][0] >= startTime):
             break
 
+    ###
+    # Initialise orientation
+    ###
     # Assume IMU is stationary and derive initial orientation
     # Reference: https://goo.gl/eChMxp
     # [Roll, Pitch, Yaw]
-    orientation = [
-        atan2(tempList[2], tempList[3])*180/pi,
-        atan2(-tempList[1], sqrt(tempList[2]**2 + tempList[3]**2))*180/pi,
-        0.0
-    ]
+    orientation = cf.getOrientationFromGravity(listRaw[-1])
     quaternion = qt.euler_to_quat(orientation)
 
     ###
-    # Initialise the lists
+    # Initialise the dead reckoning lists
     ###
-    global listRaw, listFiltered
-    # [time, ax,  ay,  az,  gx,  gy,  gz]
-    listRaw.append(getNextData())
-
     # [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
     #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
-    tempList = [startTime, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    empty = [0.0, 0.0, 0.0]
+    tempList = [startTime] + empty + empty + empty + empty + empty
     listRawDR.append(dr.doDeadReckoning(tempList+quaternion, listRaw[0]))
     listRawDR[0] = [listRawDR[0][0] - 0.004] + \
-                   listRawDR[0][1:4] + [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] + \
-                   listRawDR[0][10:13] + [0.0, 0.0, 0.0] + listRawDR[0][16:20]
+                   listRawDR[0][1:4] + empty + empty + \
+                   listRawDR[0][10:13] + empty + \
+                   listRawDR[0][16:20]
 
     listFiltered.append(listRaw[0])
     listFilteredDR.append(listRawDR[0])

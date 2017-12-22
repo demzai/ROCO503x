@@ -14,6 +14,15 @@ gyroTheta = []
 errorTheta = []
 outputTheta = []
 
+def getOrientationFromGravity(data):
+    # Reference: https://goo.gl/eChMxp
+    # [Roll, Pitch, Yaw]
+    orientation = [
+        atan2(data[2], data[3]) * 180 / pi,
+        atan2(-data[1], sqrt(data[2] ** 2 + data[3] ** 2)) * 180 / pi,
+        0.0]
+    return orientation
+
 # Perform a complementary filter on the data
 def doComplementaryFilter(deadReckonedData, rawData):
     global accelTheta, gyroTheta, errorTheta

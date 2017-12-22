@@ -11,7 +11,6 @@ import dead_reckoning as dr
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
 fileLocale = "UpDown2.txt"
@@ -46,8 +45,6 @@ calAccelScale  = [1.0, 1.0, 1.0]
 ####################################################
 ################# CUSTOM FUNCTIONS #################
 ####################################################
-# Apply scaling and offset factors
-def applyCalibration(data):
     for i in range(0, 3):
         # Offset then scale accelerometer values
         data[i+1] -= calAccelOffset[i]
@@ -65,18 +62,15 @@ def getNextData():
     :param type: Determines whether the function tries to read from a file or directly from an IMU
     :return:
     """
-    global inputType, imuObj
     if (inputType == "file"):
         # Considered an array of chars, so [:-1] removes the last character
         data = dataFile.readline()[:-1]
 
     elif (inputType == "live"):
-        # @todo get input directly from the IMU
         while (imuObj.dataReady == False):
             pass
         if (imuObj.dataReady):
             data = imuObj.getData()
-            #data = applyCalibration(data)
     else:
         print("Error: invalid input type specified. Please set either \"file\" or \"live\"")
     # Try to convert the data into an array of floats
@@ -98,7 +92,6 @@ def init():
     ###
     # Open the data file or connect to the IMU
     ###
-    global dataFile, fileLocale, imuObj
     if (inputType == "file"):
         dataFile = open(fileLocale, "r")
     elif (inputType == "live"):

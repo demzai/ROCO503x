@@ -1,16 +1,14 @@
-# @todo create complementary filter
-
 ####################################################
 ################### DEPENDENCIES ###################
 ####################################################
 from scipy.signal import butter, cheby1, cheby2, lfilter
-import numpy as np
+from helper_functions import *
 
 
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-imuSampleFrequency = 62.5
+imuSampleFrequency = 250
 chebyRipple = 1 #dB
 
 
@@ -49,11 +47,6 @@ def doFilter(data, filterSelect, filterType, cutoffFrequency, order, sampleFrequ
                                    filterType, sampleFrequency)
     else:
         return [0]
-
-
-# Extract a single column of data
-def getCol(data, column):
-    return np.array(data)[:, column].tolist()
 
 
 # Filter a data set

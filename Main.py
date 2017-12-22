@@ -1,7 +1,7 @@
 ####################################################
 ################### DEPENDENCIES ###################
 ####################################################
-import numpy as np
+from helper_functions import *
 import graph as gr
 import filter as fl
 from pyqtgraph.Qt import QtCore
@@ -14,9 +14,8 @@ import dead_reckoning as dr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "IMU_Stationary.txt"
+fileLocale = "UpDown2.txt"
 sleepTime = 0.0001
-numSamplesMax = 100
 graphWindow = gr.newWindow("Graphs", 640, 480)
 graphChart = gr.newGraph(graphWindow, "Test")
 graphAccX = gr.newPlot(graphChart, [], [], 'r', None, None, 3, 'o')
@@ -34,7 +33,7 @@ listRawDR = []
 listFiltered = []
 listFilteredDR = []
 count = 0
-dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial orientation!
+
 
 ####################################################
 ############## CALIBRATION CONSTANTS ###############
@@ -57,6 +56,7 @@ def applyCalibration(data):
         # Offset the gyroscope values
         data[i+4] -= calGyroOffset[i]
     return data
+
 
 # Retrieve the next input of raw data
 def getNextData():
@@ -87,23 +87,8 @@ def getNextData():
         except:
             data = None
 
-    print(data)
+    # print(data)
     return data
-
-
-# Extract a single column and return it as a python list
-def getCol(data, column):
-    return np.array(data)[:, column].tolist()
-
-
-# Normalise a given list to a given size
-def limitSize(data, maxLength=numSamplesMax):
-    returnVal = data
-    if (returnVal[-1] == None):
-        returnVal = returnVal[:-1]
-    if (returnVal.__len__() >= maxLength):
-        returnVal = returnVal[-maxLength:]
-    return returnVal
 
 
 ####################################################
@@ -184,7 +169,7 @@ def main():
         quaternion = 5
         """
     # Plot data if appropriate
-    triplet = 3
+    triplet = 0
 
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)

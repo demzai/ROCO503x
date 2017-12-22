@@ -2,6 +2,7 @@ import numpy as np
 import quaternion as qt
 from math import *
 
+dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial orientation!
 
 # Convert degrees to radians
 def d2r(angle):
@@ -13,7 +14,7 @@ def getRotationMatrix(x, y, z):
     rotX = [[1, 0, 0], [0, cos(d2r(x)), -sin(d2r(x))], [0, sin(d2r(x)), cos(d2r(x))]]
     rotY = [[cos(d2r(y)), 0, sin(d2r(y))], [0, 1, 0], [-sin(d2r(y)), 0, cos(d2r(y))]]
     rotZ = [[cos(d2r(z)), -sin(d2r(z)), 0], [sin(d2r(z)), cos(d2r(z)), 0], [0, 0, 1]]
-    rot = np.matrix(rotX) * np.matrix(rotY) * np.matrix(rotZ)
+    rot = np.matrix(rotZ) * np.matrix(rotY) * np.matrix(rotX)
     return rot.tolist()
 
 
@@ -40,12 +41,13 @@ def doDeadReckoning(prevComplete, raw):
         complete[i + 10] = raw[i + 4]
         complete[i + 13] = orientation[i]
 
+
     # UPDATE THE QUATERNION ORIENTATION
     # Small angle Euler angles do not work over time
     # Quaternions do work, and are safer as they don't suffer from gimbal lock
     # Choose between the 2 methods below:
 
-    # global dcm
+    global dcm
     # dcm = np.array(np.matrix(dcm) *
     #                np.matrix(getRotationMatrix(raw[4], raw[5], raw[6])))
 

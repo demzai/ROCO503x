@@ -47,7 +47,7 @@ listRawDR = []
 listFiltered = []
 listFilteredDR = []
 count = 0
-calibCount = 0
+calibrationCount = 0
 dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial orientation!
 
 ####################################################
@@ -117,7 +117,7 @@ od = apply_accel_offsets(oc, ob)                            #apply offsets
 
 
 def collect_calibration(data):
-    global start, calibCount, calV, args
+    global start, calibrationCount, calV, args
     time_esapsed = time.time() - start
     print "start time", args.startTime
     print "end time", args.startTime + args.durationTime
@@ -140,7 +140,7 @@ def collect_calibration(data):
         close_nicely()
 
 def collect_accel_calibration(data, calibration_variables):
-    global start, calibCount, calV, args
+    global start, calibrationCount, calV, args
     time_esapsed = time.time() - start
     print "start time", args.startTime
     print "end time", args.startTime + args.durationTime

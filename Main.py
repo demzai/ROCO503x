@@ -151,7 +151,7 @@ def init():
     #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
     empty = [0.0, 0.0, 0.0]
     tempList = [startTime] + empty + empty + empty + empty + empty
-    listRawDR.append(dr.doDeadReckoning(tempList+quaternion, listRaw[0]))
+    listRawDR.append(dr.doDeadReckoning(tempList+quaternion, listRaw[0], False))
     listRawDR[0] = [listRawDR[0][0] - 0.004] + \
                    listRawDR[0][1:4] + empty + empty + \
                    listRawDR[0][10:13] + empty + \
@@ -186,9 +186,9 @@ def main():
         listFiltered = limitSize(listFiltered)
 
         # Get dead reckoned data
-        listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1]))
+        listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
         listRawDR = limitSize(listRawDR)
-        listFilteredDR.append(dr.doDeadReckoning(listFilteredDR[-1], listFiltered[-1]))
+        listFilteredDR.append(dr.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
         listFilteredDR = limitSize(listFilteredDR)
 
         # listRawDR:

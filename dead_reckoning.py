@@ -1,6 +1,7 @@
 import numpy as np
 import quaternion as qt
 from math import *
+import complementary_filter as cf
 
 dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial orientation!
 
@@ -27,7 +28,7 @@ def integrateGyro(prevOrientation, gyroData, delTime):
 
 
 # Perform dead reckoning on the provided raw data
-def doDeadReckoning(prevComplete, raw):
+def doDeadReckoning(prevComplete, raw, useComplimentaryFilter):
     # Ensure that prevComplete isn't modified anywhere by copying the data over beforehand
     delTime = raw[0] - prevComplete[0]
     complete = prevComplete * 1  # Deep copy items over
@@ -36,10 +37,17 @@ def doDeadReckoning(prevComplete, raw):
     complete[0] = raw[0]
 
     # Update the Euler orientation
-    orientation = integrateGyro(prevComplete[13:16], raw[4:7], delTime)
-    for i in range(0, 3):
-        complete[i + 10] = raw[i + 4]
-        complete[i + 13] = orientation[i]
+    if(useComplimentaryFilter == False):
+        orientation = integrateGyro(prevComplete[13:16], raw[4:7], delTime)
+        for i in range(0, 3):
+            complete[i + 10] = raw[i + 4]
+            complete[i + 13] = orientation[i]
+    else:
+        orientation = cf.doComplementaryFilter(prevComplete, raw)
+        for i in range(0, 3):
+            complete[i + 10] = orientation[i+3]
+            complete[i + 13] = orientation[i]
+
 
 
     # UPDATE THE QUATERNION ORIENTATION

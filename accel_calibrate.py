@@ -93,6 +93,27 @@ def read_calibration_file_accel():
     file.close()
     return calibration_variables
 
+def generate_accel_offsets(calibration_variables_accel):
+    offsets = [0.0, 0.0, 0.0]
+    for i in range(0, 3):
+        offsets[i] = (calibration_variables_accel[i] + calibration_variables_accel[i + 3])/2
+    return offsets
+
+def apply_accel_offsets(offset, data):
+    output = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    for i in range(0, 3):
+        output[i] = data[i] - offset[i]
+    for i in range(0, 3):
+        output[i+3] = data[i+3] - offset[i]
+    return output
+
+
+
+ob = read_calibration_file_accel() #get calib data
+oc = generate_accel_offsets(ob)     #generate offsets
+od = apply_accel_offsets(oc, ob)                            #apply offsets
+
+
 
 
 def collect_calibration(data):
@@ -112,6 +133,9 @@ def collect_calibration(data):
         print "Vx", calGyroOffset[0]
         print "Vy", calGyroOffset[1]
         print "Vz", calGyroOffset[2]
+        print "Are you happy with these values? Press enter to save, "
+        print "or frantically hit escape characters to quit (ctrl+c, ctrl+x, ctrl+z, ctrl+d etc...)"
+        chr = sys.stdin.read(1)
         pickle.dump(calGyroOffset, open("calibration.txt", "wb"))
         close_nicely()
 
@@ -120,16 +144,22 @@ def collect_accel_calibration(data, calibration_variables):
     time_esapsed = time.time() - start
     print "start time", args.startTime
     print "end time", args.startTime + args.durationTime
+    if args.accelCalibrate > 3:
+        offset = 3
+    else:
+        offset = 0
     if (time_esapsed > args.startTime):
         calibCount += 1
-        calAccelOffset[args.accelCalibrate-1] += data[args.accelCalibrate]
+        calAccelOffset[args.accelCalibrate-1] += data[args.accelCalibrate-offset]
     if (time_esapsed > args.startTime + args.durationTime):
         calAccelOffset[args.accelCalibrate-1] = calAccelOffset[args.accelCalibrate-1] / calibCount
         print "averaged acceleration =", calAccelOffset[args.accelCalibrate-1]
+        print "Are you happy with these values? Press enter to save, "
+        print "or frantically hit escape characters to quit (ctrl+c, ctrl+x, ctrl+z, ctrl+d etc...)"
+        chr = sys.stdin.read(1)
         calibration_variables_accel[args.accelCalibrate - 1] = calAccelOffset[args.accelCalibrate-1]
         pickle.dump(calibration_variables_accel, open("calibrationAccel.txt", "wb"))
         close_nicely()
-
 
 # Retrieve the next input of raw data
 def getNextData():
@@ -227,20 +257,21 @@ def init():
             #Press enter to continue
             chr = sys.stdin.read(1)
     else:
-        print "entering accelerometer calibration mode."
+        print "Entering accelerometer calibration mode."
         if args.accelCalibrate == 1:
-            print "Calibrating X"
+            print "Calibrating +X"
         if args.accelCalibrate == 2:
-            print "Calibrating Y"
+            print "Calibrating +Y"
         if args.accelCalibrate == 3:
-            print "Calibrating Z"
+            print "Calibrating +Z"
         if args.accelCalibrate == 4:
             print "Calibrating -X"
         if args.accelCalibrate == 5:
             print "Calibrating -Y"
         if args.accelCalibrate == 6:
             print "Calibrating -Z"
-        print "Please press enter when ready."
+        print "Please orientate the accelerometer with the axis you wish to calibrate."
+        print "Press enter when ready."
         # Press enter to continue
         chr = sys.stdin.read(1)
 

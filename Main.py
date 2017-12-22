@@ -62,8 +62,20 @@ calV = [0,0,0]
 ####################################################
 ################# CUSTOM FUNCTIONS #################
 ####################################################
-# Apply scaling and offset factors
-def DemiapplyCalibration(data):
+#Apply scaling and offset factors
+# def demiApplyCalibration(data, calGyroOffset, calAccelOffset, calAccelScale):
+#     temp = data*1
+#     for i in range(0, 3):
+#         # Offset then scale accelerometer values
+#         temp[i+1] -= calAccelOffset[i]
+#         temp[i+1] /= calAccelScale[i]
+#
+#         # Offset the gyroscope values
+#         temp[i+4] -= calGyroOffset[i]
+#     return temp
+
+def demiApplyCalibration(data, calGyroOffset, calAccelOffset, calAccelScale):
+    temp = data*1
     for i in range(0, 3):
         # Offset then scale accelerometer values
         data[i+1] -= calAccelOffset[i]
@@ -74,18 +86,14 @@ def DemiapplyCalibration(data):
     return data
 
 
-def applyCalibration(data, calibration_variables):
-    cnt = 0
-    for item in calibration_variables:
-        data[cnt+4] -= calibration_variables[cnt]
-        cnt += 1
-    return data
-
 def read_calibration_file():
     file = open('calibration.txt', 'rb')
     calibration_variables = pickle.load(file)
     file.close()
     return calibration_variables
+
+
+
 
 def collect_calibration(data):
     global start, calibCount, calV, args
@@ -108,6 +116,31 @@ def collect_calibration(data):
         close_nicely()
 
 
+
+def read_calibration_file_accel():
+    file = open('calibrationAccel.txt', 'rb')
+    calibration_variables = pickle.load(file)
+    file.close()
+    return calibration_variables
+
+
+
+def generate_accel_offsets(calibration_variables_accel):
+    offsets = [0.0, 0.0, 0.0]
+    for i in range(0, 3):
+        offsets[i] = (calibration_variables_accel[i] + calibration_variables_accel[i + 3]) / 2
+    return offsets
+
+
+
+def generate_accel_scalars(offset, data):
+    output = [0.0, 0.0, 0.0]
+    for i in range(0, 3):
+        output[i] = data[i] - offset[i]
+    return output
+
+
+
 # Retrieve the next input of raw data
 def getNextData():
     """
@@ -115,19 +148,18 @@ def getNextData():
     :param type: Determines whether the function tries to read from a file or directly from an IMU
     :return:
     """
-    global inputType, imuObj, calibration_variables
+    global inputType, imuObj, calGyroOffset, calAccelOffset, calAccelScale
     if (inputType == "file"):
         # Considered an array of chars, so [:-1] removes the last character
         data = dataFile.readline()[:-1]
 
     elif (inputType == "live"):
-        # @todo get input directly from the IMU
         while (imuObj.dataReady == False):
             pass
         if (imuObj.dataReady):
             data = imuObj.getData()
             if not args.calibrate:
-                data = applyCalibration(data, calibration_variables)
+                data = demiApplyCalibration(data, calGyroOffset, calAccelOffset, calAccelScale)
     else:
         print("Error: invalid input type specified. Please set either \"file\" or \"live\"")
     # Try to convert the data into an array of floats
@@ -178,15 +210,20 @@ def handle_ctrl_c(signal, frame):
 ####################################################
 def init():
     #Initialize start time variable, IMU object and any input files
-    global start, calibration_variables, dataFile, fileLocale, imuObj
+    global start, calibration_variables_gyro, calibration_variables_accel, dataFile, fileLocale, imuObj
+    global calGyroOffset, calAccelScale, calAccelOffset
 
     #If we're not in calibration mode, apply the last calibration values
     if not args.calibrate:
-        calibration_variables = read_calibration_file()
+        calGyroOffset = read_calibration_file()
+        calibration_variables_accel = read_calibration_file_accel()
+        calAccelOffset = generate_accel_offsets(calibration_variables_accel)  # generate offsets
+        calAccelScale = generate_accel_scalars(calAccelOffset, calibration_variables_accel)
+
         print "Applying calibration from file. If you wish to re-run calibration, please call this program with -c or --calibrate."
         print "Please press enter when ready."
         # Press enter to continue
-        chr = sys.stdin.read(1)
+        #chr = sys.stdin.read(1)
     #If we are in calibration mode...
     else:
         duration = args.durationTime
@@ -276,12 +313,13 @@ def main():
         angular position = 4
         quaternion = 5
         """
-    # Plot data if appropriate
+
     if args.calibrate:
         triplet=3
     else:
         triplet = args.triplet
 
+    # Plot data if appropriate
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)
         gr.updatePlot(graphAccX, getCol(listFilteredDR, 1 + 3 * triplet), timeCol)

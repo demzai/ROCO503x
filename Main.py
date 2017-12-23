@@ -184,14 +184,14 @@ def main():
         quaternion = 5
         """
     # Plot data if appropriate
-    triplet = 0
-    useList = listFilteredDR
+    triplet = 2
+    useList = listRawDR
 
     if (count == updateEvery):
         timeCol = getCol(useList, 0)
         gr.updatePlot(graphAccX, getCol(useList, 1 + 3 * triplet), timeCol)
         gr.updatePlot(graphAccY, getCol(useList, 2 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
+        # gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
         # print(getCol(useList, [13,14,15]))
     count = count % updateEvery
     if (inputType == 'file'):

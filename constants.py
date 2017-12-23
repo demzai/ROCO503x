@@ -8,7 +8,7 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "UpDown1.txt"
+fileLocale = "UpDown2.txt"
 
 # Graphs
 graphWindow = gr.newWindow("Graphs", 640, 480)
@@ -20,8 +20,11 @@ graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 # House keeping
 sleepTime = 0.001
 updateEvery = 10
-startTime = 1.0
+startTime = 0.0
 numSamplesMax = 100
+
+# Complementary filter
+beta = 0.25
 
 
 ####################################################

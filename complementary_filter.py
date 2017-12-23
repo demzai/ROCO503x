@@ -4,10 +4,10 @@ import quaternion as qt
 from helper_functions import *
 import filter as fl
 import dead_reckoning as dr
+from constants import *
 
 # Global constants
 cutoffFrequency = [10.0, 10.0, 10.0]
-beta = 0.95
 
 # Global variables
 accelTheta = []

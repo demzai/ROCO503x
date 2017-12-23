@@ -3,7 +3,6 @@ import quaternion as qt
 from math import *
 import complementary_filter as cf
 
-dcm = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # @todo Incorrect initial orientation!
 
 # Convert degrees to radians
 def d2r(angle):
@@ -28,7 +27,7 @@ def integrateGyro(prevOrientation, gyroData, delTime):
 
 
 # Perform dead reckoning on the provided raw data
-def doDeadReckoning(prevComplete, raw, useComplimentaryFilter):
+def doDeadReckoning(prevComplete, raw, useComplimentaryFilter=False):
     # Ensure that prevComplete isn't modified anywhere by copying the data over beforehand
     delTime = raw[0] - prevComplete[0]
     complete = prevComplete * 1  # Deep copy items over
@@ -47,6 +46,7 @@ def doDeadReckoning(prevComplete, raw, useComplimentaryFilter):
         for i in range(0, 3):
             complete[i + 10] = orientation[i+3]
             complete[i + 13] = orientation[i]
+    complete[16:20] = qt.euler_to_quat(orientation[0:3])
 
 
 
@@ -55,15 +55,8 @@ def doDeadReckoning(prevComplete, raw, useComplimentaryFilter):
     # Quaternions do work, and are safer as they don't suffer from gimbal lock
     # Choose between the 2 methods below:
 
-    global dcm
-    # dcm = np.array(np.matrix(dcm) *
-    #                np.matrix(getRotationMatrix(raw[4], raw[5], raw[6])))
-
-    gyroQuat = qt.euler_to_quat(raw[4:7])
-    currQuat = [complete[16], complete[17], complete[18], complete[19]]
-    complete[16], complete[17], complete[18], complete[19] = qt.q_mult(currQuat, gyroQuat)
-    currQuat = [complete[16], complete[17], complete[18], complete[19]]
-    dcm = np.array(qt.quat_to_dcm(currQuat))
+    # dcm = np.array(getRotationMatrix(orientation[0], orientation[1], orientation[2]))
+    dcm = np.array(qt.quat_to_dcm(complete[16:20]))
 
     # Re-orientate the accelerometer values based on the IMU orientation
     acc = np.array([raw[1], raw[2], raw[3]]).transpose()

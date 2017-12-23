@@ -2,6 +2,7 @@
 ################### DEPENDENCIES ###################
 ####################################################
 from helper_functions import *
+from constants import *
 import graph as gr
 import filter as fl
 from pyqtgraph.Qt import QtCore
@@ -10,22 +11,6 @@ import dead_reckoning as dr
 import quaternion as qt
 import complementary_filter as cf
 
-####################################################
-################# GLOBAL CONSTANTS #################
-####################################################
-inputType = "file"
-if (inputType == "live"):
-    import Spatial_simple_cl as spatialC
-fileLocale = "UpDown1.txt"
-sleepTime = 0.001
-graphWindow = gr.newWindow("Graphs", 640, 480)
-graphChart = gr.newGraph(graphWindow, "Test")
-graphAccX = gr.newPlot(graphChart, [], [], 'r', None, None, 3, 'o')
-graphAccY = gr.newPlot(graphChart, [], [], 'g', None, None, 3, 'o')
-graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
-updateEvery = 10
-cutoffFrequency = [20, 5]  # [Accel Low Pass, Gyro High Pass]
-startTime = 1.0
 
 ####################################################
 ################# GLOBAL VARIABLES #################
@@ -36,14 +21,7 @@ listRawDR = []
 listFiltered = []
 listFilteredDR = []
 count = 0
-
-
-####################################################
-############## CALIBRATION CONSTANTS ###############
-####################################################
-calGyroOffset  = [-0.20854434285714282, -0.12702977142857147, -0.2672430000000005]
-calAccelOffset = [ 0.01725754327857845, -0.00160451736868370,  0.0145056265099980]
-calAccelScale  = [ 0.99893057626429155,  1.00137490276358830,  1.0021011922022352]
+cutoffFrequency = [20, 5]  # [Accel Low Pass, Gyro High Pass]
 
 
 ####################################################
@@ -141,8 +119,11 @@ def init():
     # Assume IMU is stationary and derive initial orientation
     # Reference: https://goo.gl/eChMxp
     # [Roll, Pitch, Yaw]
-    orientation = cf.getOrientationFromGravity(listRaw[-1])
+    orientation = cf.getOrientationFromGravity(listRaw[-1][1:4])
     quaternion = qt.euler_to_quat(orientation)
+    for i in range(0, 100):
+        cf.accelTheta.append(orientation)
+        cf.gyroTheta.append(orientation)
 
     ###
     # Initialise the dead reckoning lists
@@ -150,12 +131,11 @@ def init():
     # [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
     #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
     empty = [0.0, 0.0, 0.0]
-    tempList = [startTime] + empty + empty + empty + empty + empty
-    listRawDR.append(dr.doDeadReckoning(tempList+quaternion, listRaw[0], False))
+    tempList = [startTime] + empty + empty + empty + empty + orientation + quaternion
+    listRawDR.append(dr.doDeadReckoning(tempList, listRaw[0], False))
     listRawDR[0] = [listRawDR[0][0] - 0.004] + \
                    listRawDR[0][1:4] + empty + empty + \
-                   listRawDR[0][10:13] + empty + \
-                   listRawDR[0][16:20]
+                   listRawDR[0][10:]
 
     listFiltered.append(listRaw[0])
     listFilteredDR.append(listRawDR[0])
@@ -186,7 +166,7 @@ def main():
         listFiltered = limitSize(listFiltered)
 
         # Get dead reckoned data
-        listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
+        listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], True))
         listRawDR = limitSize(listRawDR)
         listFilteredDR.append(dr.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
         listFilteredDR = limitSize(listFilteredDR)
@@ -205,12 +185,14 @@ def main():
         """
     # Plot data if appropriate
     triplet = 0
+    useList = listFilteredDR
 
     if (count == updateEvery):
-        timeCol = getCol(listFilteredDR, 0)
-        gr.updatePlot(graphAccX, getCol(listFilteredDR, 1 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccY, getCol(listFilteredDR, 2 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccZ, getCol(listFilteredDR, 3 + 3 * triplet), timeCol)
+        timeCol = getCol(useList, 0)
+        gr.updatePlot(graphAccX, getCol(useList, 1 + 3 * triplet), timeCol)
+        gr.updatePlot(graphAccY, getCol(useList, 2 + 3 * triplet), timeCol)
+        gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
+        # print(getCol(useList, [13,14,15]))
     count = count % updateEvery
     if (inputType == 'file'):
         time.sleep(sleepTime)

@@ -1,6 +1,5 @@
 import numpy as np
-
-numSamplesMax = 100
+from constants import *
 
 # Extract a single column and return it as a python list
 def getCol(data, column):

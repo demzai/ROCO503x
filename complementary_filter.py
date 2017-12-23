@@ -13,14 +13,13 @@ beta = 0.95
 accelTheta = []
 gyroTheta = []
 errorTheta = []
-outputTheta = []
 
 def getOrientationFromGravity(data):
     # Reference: https://goo.gl/eChMxp
     # [Roll, Pitch, Yaw]
     orientation = [
-        atan2(data[2], data[3]) * 180 / pi,
-        atan2(-data[1], sqrt(data[2] ** 2 + data[3] ** 2)) * 180 / pi,
+        atan2(data[1], data[2]) * 180 / pi,
+        atan2(-data[0], sqrt(data[1] ** 2 + data[2] ** 2)) * 180 / pi,
         0.0]
     return orientation
 
@@ -35,11 +34,10 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     gravityVector = dcm * np.matrix([0.0, 0.0, 1.0]).transpose()
 
     # Obtain the theta approximations from the accelerometer (x & y only)
-    # accelThetaX = atan2( gravityVector[1], gravityVector[2]) * 180/pi
-    # accelThetaY = atan2(-gravityVector[0], gravityVector[2]) * 180/pi
-    # accelTheta.append([accelThetaX, accelThetaY, 0.0])
-    accelTheta.append(getOrientationFromGravity(gravityVector))
-
+        # Use current data (includes gravity vector AND motion vector
+    accelTheta.append(getOrientationFromGravity(newDataRaw[1:4]))
+        # Use previous data (includes gravity vector only (OLD))
+    # accelTheta.append(getOrientationFromGravity(gravityVector))
 
     # Obtain the updated gyroscope-based orientation
     prevTheta = prevDataFull[13:16]
@@ -69,18 +67,22 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     filteredErrorTheta = fl.filterData(errorTheta, [0, 1, 2],
                                         ['butter', 'low', cutoffFrequency[2], 4])
 
-    
+
     # Sensor fusion
-    outputTheta.append(gyroTheta[-1])
+    outputTheta = [0.0, 0.0, 0.0]
     for i in range(0, 3):
-        outputTheta[-1][i] = filteredGyroTheta[i] * beta + filteredAccelTheta[i] * (1 - beta)
+        outputTheta[i] = filteredGyroTheta[i] * beta + filteredAccelTheta[i] * (1 - beta)
+        # outputTheta[i] = gyroTheta[-1][i] * beta + accelTheta[-1][i] * (1.0 - beta)
         # OR
-        # outputTheta[-1][i] += filteredErrorTheta[i]
+        # outputTheta[i] += filteredErrorTheta[i]
 
 
     # Differentiate for the new gyroscope values
     outputGyro = prevTheta * 1
     for i in range(0, 3):
-        outputGyro[i] = outputTheta[-1][i] - prevTheta[i]
+        outputGyro[i] = outputTheta[i] - prevTheta[i]
 
-    return outputTheta + outputGyro
+    # Return the new orientation and gyroscope data
+    returnValue = [outputTheta[0], outputTheta[1], outputTheta[2],
+                   outputGyro[0], outputGyro[1], outputGyro[2]]
+    return returnValue

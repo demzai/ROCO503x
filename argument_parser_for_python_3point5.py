@@ -12,20 +12,20 @@ def validate(args):
     if (args.calibrate or args.accelCalibrate):
         if args.durationTime < 5:
             if args.durationTime == 1:
-                print"Duration is only", args.durationTime, "second"
+                print("Duration is only", args.durationTime, "second")
             else:
-                print"Duration is only", args.durationTime, "seconds"
-            print "It is recommended that you re-run this script with a longer duration. Calibration data generated on this run may not be very useful"
-            print "Press enter to continue, or ctrl+c to quit"
+                print("Duration is only", args.durationTime, "seconds")
+            print( "It is recommended that you re-run this script with a longer duration. Calibration data generated on this run may not be very useful")
+            print( "Press enter to continue, or ctrl+c to quit")
             chr = sys.stdin.read(1)
 
         if args.startTime < 4:
             if args.startTime == 1:
-                print "You have requested calibration to start at", args.startTime, "second"
+                print( "You have requested calibration to start at", args.startTime, "second")
             else:
-                print "You have requested calibration to start at", args.startTime, "seconds"
-            print "It is recommended that you choose a start time of at least four seconds. Calibration data generated on this run will be inaccurate"
-            print "Press enter to continue, or ctrl+c to quit"
+                print( "You have requested calibration to start at", args.startTime, "seconds")
+            print( "It is recommended that you choose a start time of at least four seconds. Calibration data generated on this run will be inaccurate")
+            print ("Press enter to continue, or ctrl+c to quit")
             chr = sys.stdin.read(1)
 
 
@@ -34,11 +34,11 @@ class commandline_argument_parser(object):
         def __call__(self, parser, namespace, values, option_string=None):
             if values < 5:
                 if values == 1:
-                    print"Duration is only", values, "second"
+                    print("Duration is only", values, "second")
                 else:
-                    print"Duration is only", values, "seconds"
-                print "It is recommended that you re-run this script with a longer duration. Calibration data generated on this run may not be very useful"
-                print "Press enter to continue, or ctrl+c to quit"
+                    print("Duration is only", values, "seconds")
+                print( "It is recommended that you re-run this script with a longer duration. Calibration data generated on this run may not be very useful")
+                print("Press enter to continue, or ctrl+c to quit")
                 chr = sys.stdin.read(1)
             setattr(namespace, self.dest, values)
 
@@ -47,11 +47,11 @@ class commandline_argument_parser(object):
         def __call__(self, parser, namespace, values, option_string=None):
             if values < 4:
                 if values == 1:
-                    print "You have requested calibration to start at", values, "second"
+                    print("You have requested calibration to start at", values, "second")
                 else:
-                    print "You have requested calibration to start at", values, "seconds"
-                print "It is recommended that you choose a start time of at least four seconds. Calibration data generated on this run will be inaccurate"
-                print "Press enter to continue, or ctrl+c to quit"
+                    print( "You have requested calibration to start at", values, "seconds")
+                print ("It is recommended that you choose a start time of at least four seconds. Calibration data generated on this run will be inaccurate")
+                print ("Press enter to continue, or ctrl+c to quit")
                 chr = sys.stdin.read(1)
             setattr(namespace, self.dest, values)
 

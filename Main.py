@@ -10,7 +10,16 @@ import time
 import dead_reckoning as dr
 import quaternion as qt
 import complementary_filter as cf
+import argument_parser_for_python_3point5
+import signal, os
 
+### Parse commandline arguments
+clp = argument_parser_for_python_3point5.commandline_argument_parser()
+args = clp.parser.parse_args()
+argument_parser_for_python_3point5.validate(args)
+
+if (inputType == "live"):
+    import Spatial_simple_cl as spatialC
 
 ####################################################
 ################# GLOBAL VARIABLES #################
@@ -51,7 +60,6 @@ def getNextData():
 
     # Else if collecting data from the IMU in real time then...
     elif (inputType == "live"):
-        # @todo get input directly from the IMU
         while (imuObj.dataReady == False):
             pass
         if (imuObj.dataReady):
@@ -72,6 +80,20 @@ def getNextData():
     # print(data)
     return data
 
+
+def close_nicely():
+    global imuObj
+    # close down sockets before exiting
+    if (inputType == "live"):
+        imuObj.stopIMU()
+    # If we're using linux then reset terminal settings when we exit
+    if get_platform() == "Linux":
+        os.system('stty sane')
+    sys.exit(0)
+
+def handle_ctrl_c(signal, frame):
+    close_nicely()
+    #sys.exit(130) # 130 is standard exit code for ctrl-c
 
 ####################################################
 ############ INITIALIZATION FUNCTION(S) ############
@@ -97,6 +119,11 @@ def init():
         nextData = getNextData()
         listRaw.append(nextData)
         listRaw = limitSize(listRaw)
+
+
+        # This line tells python to call the 'handle_ctrl_c' function if control+c is pressed (allows us to exit nicely)
+        signal.signal(signal.SIGINT, handle_ctrl_c)
+
 
         # Get filtered data
         if (nextData != None):
@@ -183,14 +210,28 @@ def main():
         angular position = 4
         quaternion = 5
         """
+        """
+        Available lists:
+        listRawDR
+        listFilteredDR
+        listFiltered
+        listRaw
+        
+        """
     # Plot data if appropriate
     triplet = 2
-    useList = listRawDR
+    useList = listFilteredDR
+    print("fil:", listFiltered)
+    print("raw:", listRaw)
 
     if (count == updateEvery):
         timeCol = getCol(useList, 0)
-        gr.updatePlot(graphAccX, getCol(useList, 1 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccY, getCol(useList, 2 + 3 * triplet), timeCol)
+        gr.updatePlot(graphAccX, getCol(useList, 1 + 3 * 0), timeCol)
+        gr.updatePlot(graphAccY, getCol(useList, 2 + 3 * 1), timeCol)
+        gr.updatePlot(g1, getCol(useList, 2 + 3 * 1), timeCol)
+        #gr.updatePlot(g2, getCol(useList, 2 + 3 * 2), timeCol)
+        gr.updatePlot(g3, getCol(useList, 2 + 3 * 3), timeCol)
+        #gr.updatePlot(g5, getCol(useList, 2 + 3 * 4), timeCol)
         # gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
         # print(getCol(useList, [13,14,15]))
     count = count % updateEvery

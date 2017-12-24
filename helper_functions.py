@@ -1,5 +1,6 @@
 import numpy as np
 from constants import *
+import sys
 
 # Extract a single column and return it as a python list
 def getCol(data, column):
@@ -14,3 +15,17 @@ def limitSize(data, maxLength=numSamplesMax):
     if (returnVal.__len__() >= maxLength):
         returnVal = returnVal[-maxLength:]
     return returnVal
+
+
+#Finds out which operating system the program is running on
+def get_platform():
+    platforms = {
+        'linux1': 'Linux',
+        'linux2': 'Linux',
+        'darwin': 'OS X',
+        'win32': 'Windows'
+    }
+    if sys.platform not in platforms:
+        return sys.platform
+
+    return platforms[sys.platform]

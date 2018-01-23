@@ -67,6 +67,10 @@ class commandline_argument_parser(object):
         self.parser.add_argument('-c', '--calibrate', action='store_const', const=True, default=False, dest='calibrate',
                             help='call this flag to perform calibration of the IMU\ndefault=%(default)s')
 
+        self.parser.add_argument('-t', '--time', action='store_const', const=True, default  =False, dest='use_time',
+                                 help='call this flag to enable start and end times\ndefault=%(default)s')
+
+
         self.parser.add_argument('-a', '--accelCalibrate', type=int, default=0, metavar='\b', dest='accelCalibrate',
                             help="R|call this flag to perform calibration of the accelerometer on the IMU\n"
                             "1 = X\n"

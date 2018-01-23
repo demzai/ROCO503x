@@ -15,6 +15,7 @@ args = clp.parser.parse_args()
 argument_parser.validate(args)
 
 
+
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
@@ -117,6 +118,9 @@ def collect_calibration(data):
 
 
 
+
+
+
 def read_calibration_file_accel():
     file = open('calibrationAccel.txt', 'rb')
     calibration_variables = pickle.load(file)
@@ -141,6 +145,12 @@ def generate_accel_scalars(offset, data):
 
 
 
+    print "start time", args.startTime
+    print "end time", args.startTime + args.durationTime
+
+
+
+printflag = True
 # Retrieve the next input of raw data
 def getNextData():
     """
@@ -148,7 +158,13 @@ def getNextData():
     :param type: Determines whether the function tries to read from a file or directly from an IMU
     :return:
     """
-    global inputType, imuObj, calGyroOffset, calAccelOffset, calAccelScale
+    global inputType, imuObj, calGyroOffset, calAccelOffset, calAccelScale, args, start, printflag
+    time_esapsed = time.time() - start
+    if (args.use_time)and(printflag):
+        print "start time", args.startTime
+        print "end time", args.startTime + args.durationTime
+        print "waiting", args.startTime, "seconds to start..."
+        printflag = False
     if (inputType == "file"):
         # Considered an array of chars, so [:-1] removes the last character
         data = dataFile.readline()[:-1]
@@ -172,7 +188,15 @@ def getNextData():
 
     if (args.calibrate):
         collect_calibration(data)
-    print(data)
+
+    if (args.use_time):
+        if (time_esapsed > args.startTime):
+            print(data)
+        if (time_esapsed > args.startTime + args.durationTime):
+            close_nicely()
+    else:
+        print(data)
+        return data
     return data
 
 

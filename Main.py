@@ -175,7 +175,8 @@ def getNextData():
         if (imuObj.dataReady):
             data = imuObj.getData()
             if not args.calibrate:
-                data = demiApplyCalibration(data, calGyroOffset, calAccelOffset, calAccelScale)
+                pass
+               # data = demiApplyCalibration(data, calGyroOffset, calAccelOffset, calAccelScale)
     else:
         print("Error: invalid input type specified. Please set either \"file\" or \"live\"")
     # Try to convert the data into an array of floats
@@ -346,9 +347,12 @@ def main():
     # Plot data if appropriate
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)
-        gr.updatePlot(graphAccX, getCol(listFilteredDR, 1 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccY, getCol(listFilteredDR, 2 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccZ, getCol(listFilteredDR, 3 + 3 * triplet), timeCol)
+        #gr.updatePlot(graphAccX, getCol(listFilteredDR, 1 + 3 * triplet), timeCol)
+        #gr.updatePlot(graphAccY, getCol(listFilteredDR, 2 + 3 * triplet), timeCol)
+        #gr.updatePlot(graphAccZ, getCol(listFilteredDR, 3 + 3 * triplet), timeCol)
+        gr.updatePlot(graphAccX, getCol(listRaw, 1 + 3 * triplet), timeCol)
+        gr.updatePlot(graphAccY, getCol(listRaw, 2 + 3 * triplet), timeCol)
+        gr.updatePlot(graphAccZ, getCol(listRaw, 3 + 3 * triplet), timeCol)
     count = count % updateEvery
     if (inputType == 'file'):
         time.sleep(sleepTime)

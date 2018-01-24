@@ -5,9 +5,10 @@ time = time - 31.036;
 %Load File
 %#file = 'e-neu.wav';
 %[y,Fs,bits] = wavread(file);
-f = 250;
-Fs = 250;
+f = 150;
+Fs = 150;
 y = a1;
+y1 = resample(y,153,150);
 find(isnan(y))
 find(isinf(y))
 Nsamps = length(y);
@@ -28,7 +29,7 @@ title('fft action')
 %Plot Sound File in Frequency Domain
 figure
 plot(f, y_fft);
-xlim([0 1000])
+xlim([0 100])
 xlabel('Frequency (Hz)')
 ylabel('Amplitude')
 title('Frequency Response of Tuning Fork A4')

@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="FFT" script:language="StarBasic">&apos;******************************************************************************
+&apos; Name: fft4loc.bas
+&apos; Uses: Fast Fourier Transform for LibreOffice Calc
+&apos; Date: 2017-01-04
+&apos; Author: Andrew Que (http://www.DrQue.net/)
+&apos; Project page: http://www.drque.net/Projects/FFT4loc/
+&apos; Revisions:
+&apos;   1.0 - 2017-01-04 - Initial release.
+&apos;   1.0.1 - 2017-01-07 - Small comment and name changes.
+&apos;   1.1 - 2017-01-21 -
+&apos;     * Bug fix--changed &apos;Integer&apos; to &apos;Long&apos;.  Prevented larger transforms.
+&apos;     * Added &apos;waveform&apos; function.
+&apos; Examples:
+&apos;  Inside calc, these functions will work:
+&apos;   =fft( A1:B100 ) - Output the discrete Fourier transform on complex data.
+&apos;   =fft( A1:A100 ) - Output the discrete Fourier transform on real-only data.
+&apos;   =ifft( A1:B100 ) - Inverse discrete Fourier transform on data.
+&apos;   =spectrum( A1:A100 ) - Magnitude and phase for wave function.
+&apos;   =spectrum( A1:A100, true ) - Magnitude and phase for wave function with
+&apos;     phase in radians.
+&apos;
+&apos;                         Copyright 2017 by Andrew Que
+&apos;                            http://www.DrQue.net/
+&apos;******************************************************************************
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   Reverse order of bits, used by Radix-2 algorithm.
+&apos; Input:
+&apos;   x - Value to reverse.
+&apos;   number - Number of bits.
+&apos; Output:
+&apos;   Long of reversed result.
+&apos;------------------------------------------------------------------------------
+Private Function reverseBits( ByVal value As Long, ByVal number As Long )
+
+  Dim result As Long
+  result = 0
+
+  &apos; Not sure why this is needed in Basic--isn&apos;t needed in C implementation.
+  value = 2^number - value
+
+  For index = 0 To number - 1
+    result = ( result * 2 ) + ( value And &amp;H01 )
+    value = value / 2
+  Next
+
+  reverseBits = result
+End Function
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   Fast Fourier transform using Cooley–Tukey Radix-2 algorithm.
+&apos; Input:
+&apos;   real - Array of real data values.
+&apos;   imag - Array of imagery data values.
+&apos; Output:
+&apos;   Modifies &apos;real&apos; and &apos;imag&apos;.
+&apos; Notes:
+&apos;   Only works on data sizes that are powers of two.
+&apos;------------------------------------------------------------------------------
+Private Function radix2( real As Variant, imag As Variant, number As Long )
+
+  Dim levels As Long
+  levels = ( log( number ) / log( 2 ) )
+
+  &apos; Sine/cosine lookup tables so calculations only need to be done once.
+  Dim cosTable( number / 2 - 1 ) As Double
+  Dim sinTable( number / 2 - 1 ) As Double
+
+  For index = 0 To ( number / 2 ) - 1
+    Dim angle as Double
+    angle = 2 * Pi * index / number
+    cosTable( index ) = cos( angle )
+    sinTable( index ) = sin( angle )
+  Next
+
+  &apos; Bit-reversed addressing permutation
+  For index = 0 To number - 1
+    Dim holdIndex
+    holdIndex = reverseBits( index, levels )
+
+    If holdIndex &gt; index Then
+      Dim hold As Double
+      hold              = real( index )
+      real( index )     = real( holdIndex )
+      real( holdIndex ) = hold
+
+      hold              = imag( index )
+      imag( index )     = imag( holdIndex )
+      imag( holdIndex ) = hold
+    EndIf
+
+  Next
+
+  &apos; Cooley-Tukey decimation-in-time radix-2 FFT
+  Dim size As Long
+  size = 2
+  Do While ( size &lt;= number )
+    Dim halfSize As Long
+    Dim tableStep As Long
+
+    halfSize = size / 2
+    tableStep = number / size
+
+    index = 0
+    Do While ( index &lt; number )
+      Dim angleIndex As Long
+      angleIndex = 0
+
+      Dim subIndex As Long
+      For subIndex = index To ( index + halfSize ) - 1
+        Dim realComponent As Double
+        realComponent =                 real( subIndex + halfSize ) * cosTable( angleIndex )
+        realComponent = realComponent + imag( subIndex + halfSize ) * sinTable( angleIndex )
+
+        Dim imagComponent As Double
+        imagComponent  =                 imag( subIndex + halfSize ) * cosTable( angleIndex )
+        imagComponent  = imagComponent - real( subIndex + halfSize ) * sinTable( angleIndex )
+
+        real( subIndex + halfSize ) = real( subIndex ) - realComponent
+        imag( subIndex + halfSize ) = imag( subIndex ) - imagComponent
+
+        real( subIndex ) = real( subIndex ) + realComponent
+        imag( subIndex ) = imag( subIndex ) + imagComponent
+
+        angleIndex = angleIndex + tableStep
+      Next
+
+      index = index + size
+    Loop
+
+    size = size * 2
+  Loop
+
+  radix2 = results
+
+End Function
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   Bluestein&apos;s algorithm for doing a Chirp Z-transform as a convolution which
+&apos;   allows an FFT of arbitrary data sizes.
+&apos; Input:
+&apos;   real - Array of real data values.
+&apos;   imag - Array of imagery data values.
+&apos; Output:
+&apos;   Modifies &apos;real&apos; and &apos;imag&apos;.
+&apos; Notes:
+&apos;   If we had to do a lot of transforms of the same size it would be
+&apos;   better to save the convolution tables.
+&apos;------------------------------------------------------------------------------
+Private Function bluestein( real As Variant, imag As Variant, number As Long )
+
+  &apos; Find a power-of-2 convolution length targetNumber such that targetNumber &gt;= number * 2 + 1
+  Dim target As Long
+  target = number * 2 + 1
+
+  Dim targetNumber As Long
+  targetNumber = 1
+  Do While ( targetNumber &lt; target )
+    targetNumber = targetNumber * 2
+  Loop
+
+  &apos; Storage for convolution data.
+  Dim aReal( targetNumber - 1 ) As Double
+  Dim aImag( targetNumber - 1 ) As Double
+  Dim bReal( targetNumber - 1 ) As Double
+  Dim bImag( targetNumber - 1 ) As Double
+
+  &apos; Sine/cosine lookup table.
+  Dim cosTable( number - 1 ) As Double
+  Dim sinTable( number - 1 ) As Double
+
+  Dim cReal( targetNumber - 1 ) As Double
+  Dim cImag( targetNumber - 1 ) As Double
+
+  &apos; Trignometric tables with temporary vectors and preprocessing.
+  Dim index As Long
+  For index = 0 To number - 1
+    Dim angle As Double
+    angle = Pi * index * index / number
+
+    &apos; Setup lookup table.
+    cosTable( index ) = cos( angle )
+    sinTable( index ) = sin( angle )
+
+    &apos; Preprocessing.
+    aReal( index ) =  real( index ) * cosTable( index ) + imag( index ) * sinTable( index )
+    aImag( index ) = -real( index ) * sinTable( index ) + imag( index ) * cosTable( index )
+  Next
+
+  bReal( 0 ) = cosTable( 0 )
+  bImag( 0 ) = sinTable( 0 )
+
+  For index = 1 To number - 1
+    bReal( index )                = cosTable( index )
+    bReal( targetNumber - index ) = cosTable( index )
+    bImag( index )                = sinTable( index )
+    bImag( targetNumber - index ) = sinTable( index )
+  Next
+
+  &apos; Convolution.
+  radix2( aReal, aImag, targetNumber )
+  radix2( bReal, bImag, targetNumber )
+
+  For index = 0 To targetNumber - 1
+    Dim hold As Double
+    hold = aReal( index ) * bReal( index ) - aImag( index ) * bImag( index )
+    aImag( index ) = aImag( index ) * bReal( index ) + aReal( index ) * bImag( index )
+    aReal( index ) = hold
+  Next
+
+  radix2( aImag, aReal, targetNumber )
+
+  &apos; Scaling (because this FFT implementation omits it)
+  For index = 0 To targetNumber - 1
+    cReal( index ) = aReal( index ) / targetNumber
+    cImag( index ) = aImag( index ) / targetNumber
+  Next
+
+  &apos; Postprocessing
+  For index = 0 To number - 1
+    real( index ) =  cReal( index ) * cosTable( index ) + cImag( index ) * sinTable( index )
+    imag( index ) = -cReal( index ) * sinTable( index ) + cImag( index ) * cosTable( index )
+  Next
+
+End Function
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   FFT internals to correct array indexing and transform direction.
+&apos; Input:
+&apos;   inputData - 1D or 2D array with real-only/complex data to transform.
+&apos;   doInverse - True for doing inverse transform.
+&apos; Output:
+&apos;   2D array with complex results.
+&apos; Notes:
+&apos;   Determines best FFT algorithm to use.
+&apos;   Pretty inefficient because we copy the incoming data, transform, and copy
+&apos;   resulting data.
+&apos;------------------------------------------------------------------------------
+Private Function fft_Internal( inputData As Variant, doInverse As Boolean )
+
+  Dim OFFSET As Long
+  OFFSET = LBound( inputData, 1 )
+
+  Dim number As Long
+  number = UBound( inputData, 1 )
+
+  Dim index As Long
+
+  &apos; If we are only given a single column of data, assume that holds the real
+  &apos; values, and the imaginary values are all 0.  Make a new array with the
+  &apos; additional imaginary values in it.
+  Dim noImaginary As Boolean
+  noImaginary = UBound( inputData, 2 ) &lt; 2
+
+  &apos; Local copy of data.
+  &apos; (Not teirbly efficient.)
+  Dim real( number - 1 ) As Double
+  Dim imag( number - 1 ) As Double
+  For index = 0 To number - 1
+    real( index ) = inputData( index + 1, 1 )
+
+    If noImaginary Then
+      imag( index ) = 0
+    Else
+      imag( index ) = inputData( index + 1, 2 )
+    EndIf
+  Next
+
+  &apos; Log base 2 of data point quantity.
+  Dim log2 As Double
+  log2 = log( number ) / log( 2 )
+
+  &apos; Determine if data size is an even power-of-two.
+  &apos; If not, a slower algorithm has to be used.
+  Dim isLog2 As Boolean
+  isLog2 = ( CInt( log2 ) = log2  )
+
+  Dim scale As Double
+  If doInverse Then
+    If isLog2 Then
+      radix2( imag, real, number )
+    Else
+      bluestein( imag, real, number )
+    EndIf
+
+    scale = 1.0 / number
+  Else
+    If isLog2 Then
+      radix2( real, imag, number )
+    Else
+      bluestein( real, imag, number )
+    EndIf
+
+    scale = 1.0
+  EndIf
+
+  &apos; Create output.
+  Dim results( number - 1, 1 )
+  For index = 0 To number - 1
+    results( index, 0 ) = real( index ) * scale
+    results( index, 1 ) = imag( index ) * scale
+  Next
+
+  fft_Internal = results
+End Function
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   Fast Fourier Transform (FFT) in forward direction (i.e. time-&gt;frequency).
+&apos; Input:
+&apos;   inputData - 1D or 2D array with real-only/complex data to transform.
+&apos; Output:
+&apos;   2D array with complex results.
+&apos;------------------------------------------------------------------------------
+Function fft( inputData As Variant )
+
+  fft = fft_Internal( inputData, False )
+
+End Function
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   Inverse Fast Fourier Transform (iFFT) in reverse direction (i.e.
+&apos;   frequency-&gt;time).
+&apos; Input:
+&apos;   inputData - 1D or 2D array with real-only/complex data to transform.
+&apos; Output:
+&apos;   2D array with complex results.
+&apos;------------------------------------------------------------------------------
+Function ifft( inputData As Variant )
+
+  ifft = fft_Internal( inputData, True )
+
+End Function
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   Four-quadrant inverse tangent.
+&apos; Input:
+&apos;   x - x-coordinate.
+&apos;   y - y-coordinate.
+&apos; Output:
+&apos;   Inverse tangent of data.
+&apos;------------------------------------------------------------------------------
+Private Function arcTan2( x As Double, y As Double ) As Double
+  Dim result As Double
+
+  Select Case x
+    Case Is &gt; 0
+        result = Atn( y / x )
+    Case Is &lt; 0
+        result = Atn( y / x ) + Pi * Sgn( y )
+
+        If Y = 0 Then
+          result = result + Pi
+        EndIf
+
+    Case Is = 0
+        result = Pi / 2 * Sgn( y )
+
+  End Select
+
+  arcTan2 = result
+
+End Function
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   Convert data set into magnitude spectrum and phase.
+&apos; Input:
+&apos;   inputData - 1D with real-only to transform.
+&apos;   isRadians - True for radian, false for degrees (default degrees).
+&apos;   minScale - Minimum magnitude before ignoring phase (default 1e-12).
+&apos; Output:
+&apos;   2D array with magnitude and phase.
+&apos;------------------------------------------------------------------------------
+Function spectrum( inputData As Variant, Optional isRadians As Boolean, Optional minScale As Double )
+
+  Dim OFFSET As Long
+  OFFSET = LBound( inputData, 1 )
+
+  Dim NUMBER As Long
+  NUMBER = UBound( inputData, 1 ) - OFFSET
+
+  &apos; The DFT data is mirrored above the Nyquist frequency (for all real data
+  &apos; anyway) so we can just ignore it.
+  NUMBER = NUMBER / 2
+
+  fftData = fft_Internal( inputData, False )
+
+  &apos; Storage for results.
+  Dim outputData( 0 To NUMBER, 1 ) As Double
+
+  If IsMissing( minScale ) Then
+    minScale = 1e-12
+  EndIf
+
+  If IsMissing( isRadians ) Then
+    isRadians = False
+  EndIf
+
+  &apos; DC value.
+  outputData( inner, 0 ) = fftData( 0, 0 ) / ( 2 * NUMBER )
+
+  &apos; For each input sample...
+  For index = 1 To NUMBER
+    Dim real As Double
+    Dim imaginary As Double
+
+    real = fftData( index, 0 )
+    imaginary = fftData( index, 1 )
+
+    outputData( index, 0 ) = sqr( real^2 + imaginary^2 ) / NUMBER
+
+    If outputData( index, 0 ) &gt; minScale Then
+      Dim phase As Double
+      phase = arcTan2( -fftData( index, 1 ), fftData( index, 0 ) )
+
+      If Not isRadians Then
+        phase = phase * 180 / Pi
+      EndIf
+
+      outputData( index, 1 ) = phase
+    Else
+      outputData( index, 1 ) = 0
+    EndIf
+  Next
+
+  spectrum = outputData
+
+End Function
+
+&apos;------------------------------------------------------------------------------
+&apos; Uses:
+&apos;   Generate a waveform based on input data.  Input must have 3 columns:
+&apos;   frequency, amplitude, and phase (in degrees).
+&apos; Input:
+&apos;   inputData - Three column array of waveform points.
+&apos;     Index:
+&apos;       1 - Frequency.
+&apos;       2 - Amplitude.
+&apos;       3 - Phase (in degrees).
+&apos;   outputPoints - Number of rows to generate.
+&apos; Output:
+&apos;   Single column with &apos;outputPoints&apos; rows.
+&apos;------------------------------------------------------------------------------
+Function waveform( inputData As Variant, outputPoints As Long )
+  Dim OFFSET As Long
+  OFFSET = LBound( inputData, 1 )
+
+  Dim NUMBER As Long
+  NUMBER = UBound( inputData, 1 ) - OFFSET
+
+  Dim outputData( 0 To outputPoints, 0 ) As Double
+
+  &apos; For every point to produce...
+  Dim pointIndex As Long
+  For pointIndex = 0 to outputPoints
+
+    &apos; Start point at zero.
+    outputData( pointIndex, 0 ) = 0
+
+    &apos; Base angle for this index.
+    Dim angle As Double
+    angle = 2 * pi * pointIndex / outputPoints
+
+    &apos; For each frequency to produce...
+    Dim inputIndex As Long
+    For inputIndex = LBound( inputData, 1 ) To UBound( inputData, 1 )
+
+      Dim frequency As Double
+      frequency = inputData( inputIndex, 1 )
+
+      Dim amplitude As Double
+      amplitude = inputData( inputIndex, 2 )
+
+      Dim phase As Double
+      phase = inputData( inputIndex, 3 ) * pi / 180
+
+      &apos; Frequency of 0 is just DC offset.  Use 90 degrees as phase so sine
+      &apos; will produce DC.
+      If 0 = frequency Then
+      	phase = pi / 2
+      EndIf
+
+      &apos; If there is an amplitude...
+      If amplitude &lt;&gt; 0 Then
+        Dim accumulator As Double
+        accumulator = amplitude * sin( frequency * angle + phase )
+
+        outputData( pointIndex, 0 ) = outputData( pointIndex, 0 ) + accumulator
+      EndIf
+    Next
+
+  Next
+
+  waveform = outputData
+
+End Function
+
+&apos;******************************************************************************
+&apos;
+&apos; Fast Fourier Transform for LibreOffice Calc by Andrew Que
+&apos; Derived from work by Project Nayuki
+&apos; https://www.nayuki.io/page/free-small-fft-in-multiple-languages
+&apos;
+&apos; Distributed under MIT License, quoted below.
+&apos;
+&apos; Copyright 2017 Andrew Que
+&apos;
+&apos; Permission is hereby granted, free of charge, to any person obtaining a copy
+&apos; of this software and associated documentation files (the &quot;Software&quot;), to deal
+&apos; in the Software without restriction, including without limitation the rights
+&apos; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+&apos; copies of the Software, and to permit persons to whom the Software is
+&apos; furnished to do so, subject to the following conditions:
+&apos;
+&apos; The above copyright notice and this permission notice shall be included in all
+&apos; copies or substantial portions of the Software.
+&apos;
+&apos; THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+&apos; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+&apos; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+&apos; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+&apos; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+&apos; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+&apos; SOFTWARE.
+&apos;
+&apos;******************************************************************************
+
+&apos; &quot;The profound study of nature is the most fertile source of mathematical
+&apos; discoveries.&quot; -- Joseph Fourier
+
+</script:module>

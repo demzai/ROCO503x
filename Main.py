@@ -137,7 +137,6 @@ def init():
                    listRawDR[0][1:4] + empty + empty + \
                    listRawDR[0][10:]
 
-    listFiltered.append(listRaw[0])
     listFilteredDR.append(listRawDR[0])
 
     return
@@ -159,7 +158,7 @@ def main():
     if (nextData != None):
         global listRawDR, listFilteredDR, listFiltered
         listFiltered.append([listRaw[-1][0]] +
-                            fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', cutoffFrequency[0], 4]) +
+                            fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', cutoffFrequency[0], 1]) +
                             fl.filterData(listRaw, [4, 5, 6], ['butter', 'high', cutoffFrequency[1], 4])
                             )
 
@@ -184,15 +183,25 @@ def main():
         quaternion = 5
         """
     # Plot data if appropriate
-    triplet = 2
-    useList = listRawDR
+    # triplet = 2
+    # useList = listRawDR
+    # if (count == updateEvery):
+    #     timeCol = getCol(useList, 0)
+    #     gr.updatePlot(graphAccX, getCol(useList, 1 + 3 * triplet), timeCol)
+    #     gr.updatePlot(graphAccY, getCol(useList, 2 + 3 * triplet), timeCol)
+    #     # gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
+    #     # print(getCol(useList, [13,14,15]))
 
+    triplet = 0
+    axis = 1
+    useList1 = listRaw
+    useList2 = listFiltered
     if (count == updateEvery):
-        timeCol = getCol(useList, 0)
-        gr.updatePlot(graphAccX, getCol(useList, 1 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccY, getCol(useList, 2 + 3 * triplet), timeCol)
+        gr.updatePlot(graphAccX, getCol(useList1, axis + 3 * triplet), getCol(useList1, 0))
+        gr.updatePlot(graphAccY, getCol(useList2, axis + 3 * triplet), getCol(useList2, 0))
         # gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
         # print(getCol(useList, [13,14,15]))
+
     count = count % updateEvery
     if (inputType == 'file'):
         time.sleep(sleepTime)

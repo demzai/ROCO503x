@@ -19,6 +19,11 @@ def butter_filter(data, order, cutoff, type, fSample):
     p = butter(order, cutoff/nyq, btype=type)
     return lfilter(p[0], p[1], data)
 
+def butter_bandpass_filter(data, order, cutoff, type, fSample):
+    nyq = 0.5 * fSample
+    p = butter(order, cutoff/nyq, btype=type)
+    return lfilter(p[0], p[1], data)
+
 
 # Create a chebyshev top-wobble filter & apply it to provided data
 def cheby_top_filter(data, order, cutoff, type, fSample):

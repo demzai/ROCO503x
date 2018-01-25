@@ -1,8 +1,8 @@
 clc
 clear
 
-path = '~/ROCO503x/data_for_report/task5/';
-file = 'try1-clean';
+path = '~/ROCO503x/data_for_report/test5/';
+file = 'USB-facing-Down-clean2';
 
 
 f1 = 'orientation-';
@@ -43,4 +43,4 @@ tm = tn / length(yt)
 
 %outputfile = sprintf('%s%s%s%s%s%d%s', path, f1, file, f3, '-', tm, '-resampled.txt')
 outputfile = sprintf('%s%s%d%s', path, 'upndown-resampled-', tm, '.txt')
-%csvwrite(outputfile,M2)
+csvwrite(outputfile,M2)

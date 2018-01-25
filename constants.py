@@ -8,7 +8,9 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "orientation-one-resampled-full.txt"
+#fileLocale = "USB-40.txt"
+#fileLocale = "orientation-one-resampled-full.txt"
+fileLocale = "orientation-one-clean.txt"
 
 # Graphs
 graphWindow = gr.newWindow("Graphs", 640, 480)

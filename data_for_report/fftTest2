@@ -1,0 +1,25 @@
+
+filename = 'orientation-one_two-mins-from-30-seconds-clean.txt';
+M = csvread(filename);
+a1 = M(:,2)
+time = M(:,1)
+%[time,a1,a2,a3,g1,g2,g3] = textread("orientation-one_two-mins-from-30-seconds-clean.txt", "%f%f%f%f%f%f%f", "delimiter", ", ", "endofline", "\n");
+time = time - 31.036;
+%Load File
+%#file = 'e-neu.wav';
+%[y,Fs,bits] = wavread(file);
+x = a1;
+tx = time;
+[y, ty] = resample(x, tx);
+ty
+y
+tz = sum(ty) - ty(1)
+tw = sum(ty) - 119.9880
+tn = tz - tw
+tm = tn / length(ty)
+
+
+Fs = tm;            % Sampling frequency                    
+T = 1/Fs;             % Sampling period       
+L = 119.9880 * 1000;             % Length of signal
+t = (0:L-1)*T;        % Time vector

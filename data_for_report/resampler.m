@@ -1,17 +1,18 @@
 clc
 clear
 
-path = '~/ROCO503x/data_for_report/static/';
-file = 'three';
+path = '~/ROCO503x/data_for_report/task5/';
+file = 'try2';
 
 
 f1 = 'orientation-';
 f3 = '-clean';
 f4 = '.txt';
 f5 = '-resampled-full.txt';
+upndown = 'upndown-clean';
 
-filename = sprintf('%s%s%s%s%s', path, f1, file, f3, f4)
-
+%filename = sprintf('%s%s%s%s%s', path, f1, file, f3, f4)
+filename = sprintf('%s%s%s%s', path, file, f3, '.txt')
 
 M = csvread(filename);
 time = M(:,1);
@@ -40,5 +41,6 @@ tw = sum(yt) - yt(end);
 tn = tz - tw;
 tm = tn / length(yt)
 
-outputfile = sprintf('%s%s%s%s%s%d%s', path, f1, file, f3, '-', tm, '-resampled.txt')
-csvwrite(outputfile,M2)
+%outputfile = sprintf('%s%s%s%s%s%d%s', path, f1, file, f3, '-', tm, '-resampled.txt')
+outputfile = sprintf('%s%s%d%s', path, 'try1-resampled-', tm, '.txt')
+%csvwrite(outputfile,M2)

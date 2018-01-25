@@ -3,14 +3,14 @@
 ####################################################
 ################### DEPENDENCIES ###################
 ####################################################
-from scipy.signal import butter, cheby1, cheby2, lfilter
+from scipy.signal import butter, cheby1, cheby2, lfilter, bessel
 import numpy as np
 
 
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-imuSampleFrequency = 62.5
+imuSampleFrequency = 136
 chebyRipple = 1 #dB
 
 
@@ -19,6 +19,11 @@ chebyRipple = 1 #dB
 def butter_filter(data, order, cutoff, type, fSample):
     nyq = 0.5 * fSample
     p = butter(order, cutoff/nyq, btype=type)
+    return lfilter(p[0], p[1], data)
+
+def bessel_filter(data, order, cutoff, type, fSample):
+    nyq = 0.5 * fSample
+    p = bessel(order, cutoff/nyq, btype=type)
     return lfilter(p[0], p[1], data)
 
 
@@ -40,6 +45,9 @@ def cheby_bottom_filter(data, order, cutoff, type, fSample):
 def doFilter(data, filterSelect, filterType, cutoffFrequency, order, sampleFrequency):
     if(filterSelect == 'butter'):
         return butter_filter(data, order, cutoffFrequency,
+                             filterType, sampleFrequency)
+    if(filterSelect == 'bessel'):
+        return bessel_filter(data, order, cutoffFrequency,
                              filterType, sampleFrequency)
     elif(filterSelect == 'chebyT'):
         return cheby_top_filter(data, order, cutoffFrequency,

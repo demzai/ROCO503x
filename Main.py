@@ -27,7 +27,7 @@ if (inputType == "live"):
 fileLocale = args.fileLocation
 print "File location:",fileLocale
 
-sleepTime = 0.0001
+sleepTime = 0.01
 numSamplesMax = 100
 graphWindow = gr.newWindow("Graphs", 640, 480)
 graphChart = gr.newGraph(graphWindow, "Test")
@@ -36,6 +36,7 @@ graphAccY = gr.newPlot(graphChart, [], [], 'g', None, None, 3, 'o')
 graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 updateEvery = 10
 cutoffFrequency = [20, 5]  # [Accel Low Pass, Gyro High Pass]
+
 
 
 
@@ -176,7 +177,7 @@ def getNextData():
             data = imuObj.getData()
             if not args.calibrate:
                 pass
-               # data = demiApplyCalibration(data, calGyroOffset, calAccelOffset, calAccelScale)
+                data = demiApplyCalibration(data, calGyroOffset, calAccelOffset, calAccelScale)
     else:
         print("Error: invalid input type specified. Please set either \"file\" or \"live\"")
     # Try to convert the data into an array of floats
@@ -314,8 +315,8 @@ def main():
     if (nextData != None):
         global listRawDR, listFilteredDR, listFiltered
         listFiltered.append([listRaw[-1][0]] +
-                            fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', cutoffFrequency[0], 4]) +
-                            fl.filterData(listRaw, [4, 5, 6], ['butter', 'high', cutoffFrequency[1], 4])
+                            fl.filterData(listRaw, [1, 2, 3], ['bessel', 'low', cutoffFrequency[0], 4]) +
+                            fl.filterData(listRaw, [4, 5, 6], ['bessel', 'high', cutoffFrequency[1], 4])
                             )
 
         listFiltered = limitSize(listFiltered)
@@ -347,12 +348,12 @@ def main():
     # Plot data if appropriate
     if (count == updateEvery):
         timeCol = getCol(listFilteredDR, 0)
-        #gr.updatePlot(graphAccX, getCol(listFilteredDR, 1 + 3 * triplet), timeCol)
-        #gr.updatePlot(graphAccY, getCol(listFilteredDR, 2 + 3 * triplet), timeCol)
-        #gr.updatePlot(graphAccZ, getCol(listFilteredDR, 3 + 3 * triplet), timeCol)
+        #gr.updatePlot(graphAccX, getCol(listFiltered, 1 + 3 * triplet), timeCol)
+        #gr.updatePlot(graphAccY, getCol(listFiltered, 2 + 3 * triplet), timeCol)
+        #gr.updatePlot(graphAccZ, getCol(listFiltered, 3 + 3 * triplet), timeCol)
         gr.updatePlot(graphAccX, getCol(listRaw, 1 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccY, getCol(listRaw, 2 + 3 * triplet), timeCol)
-        gr.updatePlot(graphAccZ, getCol(listRaw, 3 + 3 * triplet), timeCol)
+        gr.updatePlot(graphAccY, getCol(listFiltered, 1 + 3 * triplet), timeCol)
+        #gr.updatePlot(graphAccZ, getCol(listRaw, 3 + 3 * triplet), timeCol)
     count = count % updateEvery
     if (inputType == 'file'):
         time.sleep(sleepTime)

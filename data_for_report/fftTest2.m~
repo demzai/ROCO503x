@@ -22,8 +22,7 @@ g1 = resample(g1,time);
 g2 = resample(g2,time);
 g3 = resample(g3,time);
 
-M2 = [yt,a1,a2,a3,g1,g2,g3]
-csvwrite('~/ROCO503x/data_for_report/orientation-one-resampled-full.txt',M2)
+M2 = 
 
 %[time,a1,a2,a3,g1,g2,g3] = textread("orientation-one_two-mins-from-30-seconds-clean.txt", "%f%f%f%f%f%f%f", "delimiter", ", ", "endofline", "\n");
 

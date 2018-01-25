@@ -1,9 +1,20 @@
 clc
 clear
 close all
-filename = 'orientation-one_two-mins-from-30-seconds-clean.txt';
-filename2 = '~/ROCO503x/data_for_report/orientation-one_two-mins-from-30-seconds-clean-resampled.txt';
-filename3 = '~/ROCO503x/data_for_report/orientation-one_two-mins-from-30-seconds-clean-unresampled.txt';
+
+
+path = '~/ROCO503x/data_for_report/';
+file = 'one';
+
+
+f1 = 'orientation-';
+f3 = '-clean';
+f4 = '.txt';
+f5 = '-resampled-full.txt';
+
+filename = sprintf('%s%s%s%s%s', path, f1, file, f3, f4)
+
+
 M = csvread(filename);
 time = M(:,1);
 time = time - 31.036;
@@ -22,28 +33,24 @@ g1 = resample(g1,time);
 g2 = resample(g2,time);
 g3 = resample(g3,time);
 
-M2 = [yt,a1,a2,a3,g1,g2,g3]
-csvwrite('~/ROCO503x/data_for_report/orientation-one-resampled-full.txt',M2)
+M2 = [yt,a1,a2,a3,g1,g2,g3];
 
-%[time,a1,a2,a3,g1,g2,g3] = textread("orientation-one_two-mins-from-30-seconds-clean.txt", "%f%f%f%f%f%f%f", "delimiter", ", ", "endofline", "\n");
 
-%Load File
-%#file = 'e-neu.wav';
-%[y,Fs,bits] = wavread(file);
-x = a1;
-tx = time;
-[y, ty] = resample(x, tx);
-ty
-y
-M2 = [ty, y]
-M3 = [time,a1]
-csvwrite(filename2,M2)
-csvwrite(filename3,M3)
+tz = sum(yt) - yt(1);
+%tw = sum(yt) - 119.9880;
+tw = sum(yt) - yt(end);
+tn = tz - tw;
+tm = tn / length(yt)
 
-tz = sum(ty) - ty(1)
-tw = sum(ty) - 119.9880
-tn = tz - tw
-tm = tn / length(ty)
+outputfile = sprintf('%s%s%s%s%s%d%s', path, f1, file, f3, '-', tm, f4)
+csvwrite('~/ROCO503x/data_for_report/orientation-two-resampled-full.txt',M2)
+
+
+
+
+
+
+
 
 
 Fs = tm;            % Sampling frequency                    

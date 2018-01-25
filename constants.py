@@ -8,7 +8,7 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "UpDown2.txt"
+fileLocale = "orientation-one-resampled-full.txt"
 
 # Graphs
 graphWindow = gr.newWindow("Graphs", 640, 480)
@@ -18,7 +18,7 @@ graphAccY = gr.newPlot(graphChart, [], [], 'g', None, None, 3, 'o')
 graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 
 # House keeping
-sleepTime = 0.001
+sleepTime = 0.0001
 updateEvery = 10
 startTime = 0.0
 numSamplesMax = 100

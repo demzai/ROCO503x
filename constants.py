@@ -14,7 +14,8 @@ fileLocale = "orientation-one-resampled-full.txt"
 #fileLocale = "upndown-resampled.txt"
 fileLocale = "z-pattern-resampled.txt"
 fileLocale = "swinging-test-resampled.txt"
-fileLocale = "upndown-resampled.txt"
+#fileLocale = "upndown-resampled.txt"
+fileLocale = "try2-resampled.txt"
 
 # Graphs
 graphWindow = gr.newWindow("Graphs", 640, 480)

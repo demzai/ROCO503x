@@ -169,7 +169,7 @@ def main():
             listFiltered = limitSize(listFiltered)
 
             # Get dead reckoned data
-            listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
+            listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], True))
             listRawDR = limitSize(listRawDR)
 
 
@@ -179,7 +179,7 @@ def main():
 
             #listFilteredDR[-1][0] = listRaw[-2][0]
 
-            listFilteredDR.append(dr.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
+            listFilteredDR.append(dr.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
             listFilteredDR = limitSize(listFilteredDR)
 
 

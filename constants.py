@@ -12,9 +12,9 @@ if (inputType == "live"):
 fileLocale = "orientation-one-resampled-full.txt"
 #fileLocale = "orientation-one-clean.txt"
 #fileLocale = "upndown-resampled.txt"
-fileLocale = "z-pattern-resampled.txt"
-fileLocale = "swinging-test-resampled.txt"
-#fileLocale = "upndown-resampled.txt"
+#fileLocale = "z-pattern-resampled.txt"
+#fileLocale = "swinging-test-resampled.txt"
+fileLocale = "upndown-resampled-short.txt"
 #fileLocale = "try2-resampled.txt"
 
 # Graphs

@@ -46,6 +46,7 @@ def doDeadReckoning(prevComplete, raw, useComplimentaryFilter=False):
         for i in range(0, 3):
             complete[i + 10] = orientation[i+3]
             complete[i + 13] = orientation[i]
+    # orientation[2] = 0
     complete[16:20] = qt.euler_to_quat(orientation[0:3])
 
 
@@ -59,8 +60,8 @@ def doDeadReckoning(prevComplete, raw, useComplimentaryFilter=False):
     dcm = np.array(qt.quat_to_dcm(complete[16:20]))
 
     # Re-orientate the accelerometer values based on the IMU orientation
-    acc = np.array([raw[1], raw[2], raw[3]]).transpose()
-    acc = dcm.dot(acc) * 9.81
+    acc = np.array([raw[1] * 9.81, raw[2] * 9.81, raw[3] * 9.81])
+    # acc = dcm.dot(acc.transpose())
 
     # Update the acceleration, velocity & position info
     for i in range(0, 3):

@@ -155,56 +155,60 @@ def main():
     listRaw = limitSize(listRaw)
 
     # Get filtered data
-    if (nextData != None):
-        global listRawDR, listFilteredDR, listFiltered
-        listFiltered.append([listRaw[-1][0]] +
-                            fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', cutoffFrequency[0], 1]) +
-                            fl.filterData(listRaw, [4, 5, 6], ['butter', 'high', cutoffFrequency[1], 4])
-                            )
+    if(listRaw.__len__() >= 300):
+        if (nextData != None):
+            global listRawDR, listFilteredDR, listFiltered
+            listFiltered[-1][0] = listRaw[-2][0]
+            listFiltered.append([listRaw[-1][0]] +
+                                fl.filterData(listRaw, [1, 2   ], ['butter', 'band', [1.745,3], 1]) +
+                                fl.filterData(listRaw, [3      ], ['butter', 'band', [0.1,1], 4]) +
+                                fl.filterData(listRaw, [4, 5, 6], ['butter', 'low', 40, 4])
+                                )
 
-        listFiltered = limitSize(listFiltered)
+            listFiltered = limitSize(listFiltered)
 
-        # Get dead reckoned data
-        listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], True))
-        listRawDR = limitSize(listRawDR)
-        listFilteredDR.append(dr.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
-        listFilteredDR = limitSize(listFilteredDR)
+            # Get dead reckoned data
+            listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
+            listRawDR = limitSize(listRawDR)
+            listFilteredDR[-1][0] = listRaw[-2][0]
+            listFilteredDR.append(dr.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
+            listFilteredDR = limitSize(listFilteredDR)
 
-        # listRawDR:
-        #  [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
-        #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
-        """
-        set triplet to:
-        acceleration = 0
-        velocity = 1
-        position = 2
-        angular velocity = 3
-        angular position = 4
-        quaternion = 5
-        """
-    # Plot data if appropriate
-    # triplet = 2
-    # useList = listRawDR
-    # if (count == updateEvery):
-    #     timeCol = getCol(useList, 0)
-    #     gr.updatePlot(graphAccX, getCol(useList, 1 + 3 * triplet), timeCol)
-    #     gr.updatePlot(graphAccY, getCol(useList, 2 + 3 * triplet), timeCol)
-    #     # gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
-    #     # print(getCol(useList, [13,14,15]))
+            # listRawDR:
+            #  [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
+            #   gx,  gy,  gz,  tx,  ty,  tz,  qw,  qx,  qy,  qz]
+            """
+            set triplet to:
+            acceleration = 0
+            velocity = 1
+            position = 2
+            angular velocity = 3
+            angular position = 4
+            quaternion = 5
+            """
+        # Plot data if appropriate
+        # triplet = 2
+        # useList = listRawDR
+        # if (count == updateEvery):
+        #     timeCol = getCol(useList, 0)
+        #     gr.updatePlot(graphAccX, getCol(useList, 1 + 3 * triplet), timeCol)
+        #     gr.updatePlot(graphAccY, getCol(useList, 2 + 3 * triplet), timeCol)
+        #     # gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
+        #     # print(getCol(useList, [13,14,15]))
 
-    triplet = 0
-    axis = 1
-    useList1 = listRaw
-    useList2 = listFiltered
-    if (count == updateEvery):
-        gr.updatePlot(graphAccX, getCol(useList1, axis + 3 * triplet), getCol(useList1, 0))
-        gr.updatePlot(graphAccY, getCol(useList2, axis + 3 * triplet), getCol(useList2, 0))
-        # gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
-        # print(getCol(useList, [13,14,15]))
+        triplet = 2
+        axis = 2
+        useList1 = listRawDR
+        useList2 = listFilteredDR
+        if (count == updateEvery):
+            # gr.updatePlot(graphAccX, getCol(useList1, axis + 3 * triplet), getCol(useList1, 0))
+            gr.updatePlot(graphAccY, getCol(useList2, 1 + 3 * triplet), getCol(useList2, 0))
+            # gr.updatePlot(graphAccZ, getCol(useList, 3 + 3 * triplet), timeCol)
+            # print(getCol(useList, [13,14,15]))
 
-    count = count % updateEvery
-    if (inputType == 'file'):
-        time.sleep(sleepTime)
+        count = count % updateEvery
+        if (inputType == 'file'):
+            time.sleep(sleepTime)
 
 
 # Initialize the system

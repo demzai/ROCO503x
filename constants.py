@@ -8,7 +8,7 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "try2-resampled-1.050825e-02.txt"
+fileLocale = "z-pattern-resampled-7.450530e-03.txt"
 
 # Graphs
 graphWindow = gr.newWindow("Graphs", 640, 480)
@@ -21,7 +21,7 @@ graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 sleepTime = 0.0001
 updateEvery = 10
 startTime = 0.0
-numSamplesMax = 100
+numSamplesMax = 1000
 
 # Complementary filter
 beta = 0.25

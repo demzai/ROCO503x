@@ -7,7 +7,7 @@ import dead_reckoning as dr
 from constants import *
 
 # Global constants
-cutoffFrequency = [10.0, 10.0, 10.0]
+cutoffFrequency = [50.0, 50.0, 50.0]
 
 # Global variables
 accelTheta = []
@@ -43,7 +43,8 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     prevTheta = prevDataFull[13:16]
     delTime = newDataRaw[0] - prevDataFull[0]
     gyroTheta.append(dr.integrateGyro(prevDataFull[13:16], newDataRaw[4:7], delTime))
-    accelTheta[-1][2] = gyroTheta[-1][2]
+    accelTheta[-1][2] = 0
+    gyroTheta[-1][2] = 0
 
 
     # Obtain the error between the theta values

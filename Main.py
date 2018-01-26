@@ -169,7 +169,12 @@ def main():
             listFiltered = limitSize(listFiltered)
 
             # Get dead reckoned data
-            listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], True))
+            #listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listRaw[-1], True))
+            #listRawDR = limitSize(listRawDR)
+
+
+
+            listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listFiltered[-1], False))
             listRawDR = limitSize(listRawDR)
 
             #listFilteredDR[-1][0] = listRaw[-2][0]
@@ -177,8 +182,6 @@ def main():
             listFilteredDR.append(dr.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
             listFilteredDR = limitSize(listFilteredDR)
 
-            #listRawDR.append(dr.doDeadReckoning(listRawDR[-1], listFiltered[-1], False))
-            #listRawDR = limitSize(listRawDR)
 
             # listRawDR:
             #  [time, ax,  ay,  az,  vx,  vy,  vz,  px,  py,  pz,
@@ -207,6 +210,7 @@ def main():
         axis2 = 2
         useList1 = listRawDR # not-comp-filtered
         useList2 = listFilteredDR#comp filtered
+        print(listFilteredDR[-1])
         if (count == updateEvery):
             gr.updatePlot(graphAccX, getCol(useList1, axis + 3 * triplet), getCol(useList1, 0))
             gr.updatePlot(graphAccY, getCol(useList2, axis + 3 * triplet), getCol(useList2, 0))
@@ -215,7 +219,7 @@ def main():
             #print(getCol(useList, [13,14,15]))
 
             #print(getCol(useList2, axis + 3 * triplet), getCol(useList2, 0))
-            #print(listFiltered[-1])
+
         count = count % updateEvery
         if (inputType == 'file'):
             time.sleep(sleepTime)

@@ -1,7 +1,7 @@
 clc
 clear
 
-path = '~/ROCO503x/data_for_report/task5/';
+path = '~/ROCO503x/data_for_report/swinging_test/';
 file = 'try1-clean';
 
 

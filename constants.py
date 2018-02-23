@@ -8,7 +8,7 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "z-pattern-resampled-7.450530e-03.txt"
+fileLocale = "Pendulum0.txt"
 
 # Graphs
 graphWindow = gr.newWindow("Graphs", 640, 480)
@@ -24,7 +24,8 @@ startTime = 0.0
 numSamplesMax = 1000
 
 # Complementary filter
-beta = 0.25
+beta = 0.99
+alpha = 0.005
 
 
 ####################################################

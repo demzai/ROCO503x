@@ -72,8 +72,8 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     # Sensor fusion
     outputTheta = [0.0, 0.0, 0.0]
     for i in range(0, 3):
-        outputTheta[i] = filteredGyroTheta[i] * beta + filteredAccelTheta[i] * (1 - beta)
-        # outputTheta[i] = gyroTheta[-1][i] * beta + accelTheta[-1][i] * (1.0 - beta)
+        # outputTheta[i] = filteredGyroTheta[i] * beta + filteredAccelTheta[i] * (1 - beta)
+        outputTheta[i] = gyroTheta[-1][i] * beta + accelTheta[-1][i] * (1.0 - beta)
         # OR
         # outputTheta[i] += filteredErrorTheta[i]
 
@@ -85,5 +85,5 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
 
     # Return the new orientation and gyroscope data
     returnValue = [outputTheta[0], outputTheta[1], outputTheta[2],
-                   outputGyro[0], outputGyro[1], outputGyro[2]]
+                   newDataRaw[4], newDataRaw[5], newDataRaw[6]]
     return returnValue

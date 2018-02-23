@@ -9,6 +9,14 @@ def d2r(angle):
     return angle * pi / 180
 
 
+# Ensure angles remain within 0 - 2pi range
+def angleRange(angle):
+    if angle < 0:
+        angle += int(1 + abs(angle) / 360) * 360
+    elif angle > 360:
+        angle -= int(    abs(angle) / 360) * 360
+    return angle
+
 # Generate a rotation matrix from the roll pitch & yaw values
 def getRotationMatrix(x, y, z):
     rotX = [[1, 0, 0], [0, cos(d2r(x)), -sin(d2r(x))], [0, sin(d2r(x)), cos(d2r(x))]]
@@ -40,13 +48,16 @@ def doDeadReckoning(prevComplete, raw, useComplimentaryFilter=False):
         orientation = integrateGyro(prevComplete[13:16], raw[4:7], delTime)
         for i in range(0, 3):
             complete[i + 10] = raw[i + 4]
-            complete[i + 13] = orientation[i]
+            complete[i + 13] = angleRange(orientation[i])
     else:
         orientation = cf.doComplementaryFilter(prevComplete, raw)
         for i in range(0, 3):
             complete[i + 10] = orientation[i+3]
-            complete[i + 13] = orientation[i]
+            complete[i + 13] = angleRange(orientation[i])
     # orientation[2] = 0
+    orientation[0] *= pi/180
+    orientation[1] *= pi/180
+    orientation[2] *= pi/180
     complete[16:20] = qt.euler_to_quat(orientation[0:3])
 
 
@@ -60,16 +71,17 @@ def doDeadReckoning(prevComplete, raw, useComplimentaryFilter=False):
     dcm = np.array(qt.quat_to_dcm(complete[16:20]))
 
     # Re-orientate the accelerometer values based on the IMU orientation
-    acc = np.array([raw[1] * 9.81, raw[2] * 9.81, raw[3] * 9.81])
+    g = 1
+    acc = np.array([raw[1] * g, raw[2] * g, raw[3] * g])
     # acc = dcm.dot(acc.transpose())
 
     # Update the acceleration, velocity & position info
     for i in range(0, 3):
         # Acceleration
         complete[i + 1] = acc[i]
-        # Subtract gravity
+        # Subtract gravity - fails unless gravity is pointing down!!!
         if (i == 2):
-            acc[i] -= 9.81
+            acc[i] -= g
         # Position += u*t + 0.5*a*t^2
         complete[i + 7] += (complete[i + 4] + 0.5 * acc[i] * delTime) * delTime
         # Velocity += a*t

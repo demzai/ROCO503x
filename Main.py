@@ -186,10 +186,10 @@ def main():
             listFiltered = limitSize(listFiltered)
 
             # Get dead reckoned data
-            listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], True))
+            listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
             listRawDR = limitSize(listRawDR)
             listFilteredDR[-1][0] = listRaw[-2][0]
-            listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
+            listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
             listFilteredDR = limitSize(listFilteredDR)
 
             # Output data to a text file

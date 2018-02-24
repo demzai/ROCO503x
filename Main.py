@@ -3,7 +3,6 @@
 ####################################################
 from helper_functions import *
 from constants import *
-import graph as gr
 import filter as fl
 from pyqtgraph.Qt import QtCore
 import time
@@ -166,7 +165,7 @@ def main():
     # Get raw data
     nextData = getNextData()
     orientation = cf.getOrientationFromGravity(nextData)
-    # mult = 1.0
+
     nextData[4] = orientation[0]
     nextData[5] = orientation[1]
     nextData[6] = orientation[2]
@@ -186,10 +185,10 @@ def main():
             listFiltered = limitSize(listFiltered)
 
             # Get dead reckoned data
-            listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
+            listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], True))
             listRawDR = limitSize(listRawDR)
             listFilteredDR[-1][0] = listRaw[-2][0]
-            listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
+            listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
             listFilteredDR = limitSize(listFilteredDR)
 
             # Output data to a text file
@@ -214,14 +213,14 @@ def main():
         quaternion = 5
         """
 
-        triplet = 1
-        axis = 2
+        triplet = 2
+        axis = 1
         useList1 = listRawDR
         useList2 = listFilteredDR
         # print(listFilteredDR[-1])
         if (count == updateEvery):
             # gr.updatePlot(graphAccX, getCol(useList1, axis + 3 * triplet), getCol(useList1, 0))
-            # gr.updatePlot(graphAccY, getCol(useList1, 2 + 3 * triplet), getCol(useList1, 1 + 3 * triplet))
+            # gr.updatePlot(graphAccY, getCol(useList1, 1 + 3 * triplet), getCol(useList1, 2 + 3 * triplet))
             print(listRaw[-1][0])
 
         count = count % updateEvery

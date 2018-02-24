@@ -42,7 +42,7 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     # Obtain the updated gyroscope-based orientation
     prevTheta = prevDataFull[13:16]
     delTime = newDataRaw[0] - prevDataFull[0]
-    gyroTheta.append(dr.integrateGyro(prevDataFull[13:16], newDataRaw[4:7], delTime))
+    gyroTheta.append(integrateGyro(prevDataFull[13:16], newDataRaw[4:7], delTime))
     accelTheta[-1][2] = 0
     gyroTheta[-1][2] = 0
 
@@ -86,4 +86,4 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     # Return the new orientation and gyroscope data
     returnValue = [outputTheta[0], outputTheta[1], outputTheta[2],
                    newDataRaw[4], newDataRaw[5], newDataRaw[6]]
-    return returnValue
+    return [0,0,0,0,0,0]

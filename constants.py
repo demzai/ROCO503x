@@ -25,7 +25,7 @@ numSamplesMax = 1000
 
 # Complementary filter
 beta = 0.99
-alpha = 0.005
+alpha = 0.98
 
 
 ####################################################

@@ -24,9 +24,16 @@ listFilteredDR = []
 rawDR = dr.DeadReckon()
 filtDR = dr.DeadReckon()
 
-
 count = 0
 cutoffFrequency = [20, 5]  # [Accel Low Pass, Gyro High Pass]
+
+fh = open(writeFileLocale, "w")
+fh.write("time, ax, ay, az, gx, gy, gz, " + \
+          "time, ax, ay, az, gx, gy, gz, " + \
+          "time, ax, ay, az, vx, vy, vz, px, py, pz, " + \
+          "gx,  gy,  gz, tx, ty, tz, qw, qx, qy, qz, " + \
+          "time, ax, ay, az, vx, vy, vz, px, py, pz, " + \
+          "gx, gy, gz, tx, ty, tz, qw, qx, qy, qz\n")
 
 
 ####################################################
@@ -185,7 +192,13 @@ def main():
             listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], True))
             listFilteredDR = limitSize(listFilteredDR)
 
+            # Output data to a text file
+            temp = [listRaw[-1] + listFiltered[-1] + listRawDR[-1] + listFilteredDR[-1]]
+            fh.write(''.join(str(e) for e in temp))
+            fh.write("\n")
+
         else:
+            fh.close()
             quit(1)
 
         # listRawDR:
@@ -208,11 +221,12 @@ def main():
         # print(listFilteredDR[-1])
         if (count == updateEvery):
             # gr.updatePlot(graphAccX, getCol(useList1, axis + 3 * triplet), getCol(useList1, 0))
-            gr.updatePlot(graphAccY, getCol(useList1, 2 + 3 * triplet), getCol(useList1, 1 + 3 * triplet))
+            # gr.updatePlot(graphAccY, getCol(useList1, 2 + 3 * triplet), getCol(useList1, 1 + 3 * triplet))
+            print(listRaw[-1][0])
 
         count = count % updateEvery
-        if (inputType == 'file'):
-            time.sleep(sleepTime)
+        # if (inputType == 'file'):
+        #     time.sleep(sleepTime)
 
 
 # Initialize the system

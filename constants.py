@@ -8,7 +8,8 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "Pendulum0.txt"
+fileLocale = "PillarIMU.txt"
+writeFileLocale = "CodeResults.txt"
 
 # Graphs
 graphWindow = gr.newWindow("Graphs", 640, 480)

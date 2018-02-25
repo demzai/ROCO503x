@@ -8,7 +8,7 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "Z-PatternIMU.txt"
+fileLocale = "PendulumIMU.txt"
 writeFileLocale = "CodeResults.txt"
 
 # Graphs
@@ -26,7 +26,7 @@ numSamplesMax = 1000
 
 # Complementary filter
 beta = 0.99
-alpha = 0.995 # 0.98 for pendulum, 0.995 for Z-Pattern & Pillar Drill
+alpha = 0.98
 
 
 ####################################################

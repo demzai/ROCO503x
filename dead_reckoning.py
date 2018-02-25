@@ -3,32 +3,15 @@ import complementary_filter as cf
 from helper_functions import *
 
 class DeadReckon(object):
-    # Z-Pattern:
-    prevAccSmooth = [-0.015, -0.01, 1]
 
-    prevVelActual = [324.6, -2.5, 329, 0, 0, 0]
-    prevVelSmooth = [0, 0, 0, 0, 0, 0]
+    prevAccSmooth = [0.0312,1,0]
 
-    prevPosActual = [-5406.9, 36.8, -5484.1]
-    prevPosSmooth = [0, 0, 0]
+    prevVelActual = [0,0,0]
+    prevVelSmooth = [0,0,0]
 
-    # # Pillar Drill:
-    # prevAccSmooth = [-1, -0.115, 0]
-    #
-    # prevVelActual = [-2.9, 33.57, 0, 0, 0, 0]
-    # prevVelSmooth = [0, 0, 0, 0, 0, 0]
-    #
-    # prevPosActual = [46, -1112, 162]
-    # prevPosSmooth = [0, 0, 0]
-    #
-    # # Pendulum:
-    # prevAccSmooth = [0.0312, 1, 0]
-    #
-    # prevVelActual = [0, 0, 0, 0, 0, 0]
-    # prevVelSmooth = [0, 0, 0, 0, 0, 0]
-    #
-    # prevPosActual = [0, 0, 0]
-    # prevPosSmooth = [0, 0, 0]
+    prevPosActual = [0,0,0]
+    prevPosSmooth = [0,0,0]
+
 
     # Ensure angles remain within 0 - 2pi range
     def angleRange(self, angle):
@@ -91,26 +74,20 @@ class DeadReckon(object):
         g = -9.81
         for i in range(0, 3):
             # Acceleration
-            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], acc[i], 0.9)
+            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], acc[i])
             complete[i + 1] = (acc[i]-self.prevAccSmooth[i])*g
 
             # Subtract gravity - fails unless gravity is pointing down!!!
-            #acc[i] = (acc[i]-self.prevAccSmooth[i])*g
-            if i == 0:
-                acc[i] += 1
-            acc[i] *= g
+            acc[i] = (acc[i]-self.prevAccSmooth[i])*g
 
             # Velocity += a*t
             self.prevVelActual[i] += acc[i] * delTime
-            self.prevVelSmooth[i] = expAvg(self.prevVelSmooth[i], self.prevVelActual[i],0.995)
-
-            self.prevVelActual[i+3] = self.prevVelActual[i] - self.prevVelSmooth[i]
-            self.prevVelSmooth[i+3] = expAvg(self.prevVelSmooth[i+3], self.prevVelActual[i+3], 0.995)
-            complete[i + 4] = self.prevVelActual[i+3] - self.prevVelSmooth[i+3]
+            self.prevVelSmooth[i] = expAvg(self.prevVelSmooth[i], self.prevVelActual[i])
+            complete[i + 4] = self.prevVelActual[i] - self.prevVelSmooth[i]
 
             # Position += v*t - 0.5*a*t^2
             self.prevPosActual[i] += (complete[i+4] - 0.5 * acc[i] * delTime) * delTime
-            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i], 0.995)
+            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i])
             complete[i + 7] = self.prevPosActual[i] - self.prevPosSmooth[i]
 
         return complete

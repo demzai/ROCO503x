@@ -17,10 +17,9 @@ errorTheta = []
 def getOrientationFromGravity(data):
     # Reference: https://goo.gl/eChMxp
     # [Roll, Pitch, Yaw]
-    orientation = [
-        atan2(data[1], data[2]) * 180 / pi,
-        atan2(-data[0], sqrt(data[1] ** 2 + data[2] ** 2)) * 180 / pi,
-        0.0]
+    orientation = [0.0,
+        atan2(-data[2], sqrt(data[1] ** 2 + data[0] ** 2)) * 180 / pi,
+        atan2(data[1], data[0]) * 180 / pi]
     return orientation
 
 # Perform a complementary filter on the data
@@ -43,8 +42,9 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     prevTheta = prevDataFull[13:16]
     delTime = newDataRaw[0] - prevDataFull[0]
     gyroTheta.append(integrateGyro(prevDataFull[13:16], newDataRaw[4:7], delTime))
-    accelTheta[-1][2] = 0
-    gyroTheta[-1][2] = 0
+    # accelTheta[-1][2] = gyroTheta[-1][2]
+    accelTheta[-1][0] = 0
+    gyroTheta[-1][0] = 0
 
 
     # Obtain the error between the theta values
@@ -86,4 +86,4 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     # Return the new orientation and gyroscope data
     returnValue = [outputTheta[0], outputTheta[1], outputTheta[2],
                    newDataRaw[4], newDataRaw[5], newDataRaw[6]]
-    return [0,0,0,0,0,0]
+    return returnValue#[0,0,0,0,0,0]

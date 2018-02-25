@@ -44,12 +44,12 @@ class DeadReckon(object):
             orientation = integrateGyro(prevComplete[13:16], raw[4:7], delTime)
             for i in range(0, 3):
                 complete[i + 10] = raw[i + 4]
-                complete[i + 13] = self.angleRange(orientation[i])
+                complete[i + 13] = orientation[i]
         else:
             orientation = cf.doComplementaryFilter(prevComplete, raw)
             for i in range(0, 3):
                 complete[i + 10] = orientation[i+3]
-                complete[i + 13] = self.angleRange(orientation[i])
+                complete[i + 13] = orientation[i]
         # orientation[2] = 0
         orientation[0] *= pi/180
         orientation[1] *= pi/180

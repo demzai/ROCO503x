@@ -182,7 +182,7 @@ def main():
             listFiltered[-1][0] = listRaw[-2][0]*1
             listFiltered.append([listRaw[-1][0]] +
                                 fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', 2.5, 1]) +
-                                fl.filterData(listRaw, [4, 5, 6], ['butter', 'low', 2.5, 4])
+                                fl.filterData(listRaw, [4, 5, 6], ['butter', 'low', 60, 4])
                                 )
 
             listFiltered = limitSize(listFiltered)

@@ -8,7 +8,7 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "PillarIMU.txt"
+fileLocale = "Z-PatternIMU.txt"
 writeFileLocale = "CodeResults.txt"
 
 # Graphs
@@ -19,14 +19,14 @@ graphAccY = gr.newPlot(graphChart, [], [], 'g', None, None, 3, 'o')
 graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 
 # House keeping
-sleepTime = 0.1
+sleepTime = 0.0001
 updateEvery = 10
 startTime = 0.0
 numSamplesMax = 1000
 
 # Complementary filter
 beta = 0.99
-alpha = 0.98
+alpha = 0.995
 
 
 ####################################################

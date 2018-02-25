@@ -4,13 +4,13 @@ from helper_functions import *
 
 class DeadReckon(object):
 
-    prevAccSmooth = [-1.008,-0.005,0]
+    prevAccSmooth = [0,0,1]
 
     prevVelActual = [0,0,0]
-    prevVelSmooth = [8.41,8.33,-12.22]
+    prevVelSmooth = [4.45,2.75,0.82]
 
     prevPosActual = [0,0,0]
-    prevPosSmooth = [-2165.648,-2115.03,3011.83]
+    prevPosSmooth = [-96.7,-40.5,-29.1]
 
 
     # Ensure angles remain within 0 - 2pi range

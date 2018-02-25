@@ -183,10 +183,10 @@ def main():
     if(listRaw.__len__() >= 300):
         if (nextData != None):
             global listRawDR, listFilteredDR, listFiltered
-            listFiltered[-1][0] = listRaw[-2][0]
+            listFiltered[-1][0] = listRaw[-2][0]*1
             listFiltered.append([listRaw[-1][0]] +
                                 fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', 2.5, 1]) +
-                                fl.filterData(listRaw, [4, 5, 6], ['butter', 'low', 2.5, 4])
+                                fl.filterData(listRaw, [4, 5, 6], ['butter', 'low', 60, 4])
                                 )
 
             listFiltered = limitSize(listFiltered)
@@ -198,11 +198,11 @@ def main():
             listRawDRComp.append(rawDRC.doDeadReckoning(listRawDRComp[-1], listRaw[-1], True))
             listRawDRComp = limitSize(listRawDRComp)
 
-            listFilteredDR[-1][0] = listRaw[-2][0]
+            listFilteredDR[-1][0] = listRaw[-2][0]*1
             listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
             listFilteredDR = limitSize(listFilteredDR)
 
-            listFilteredDRComp[-1][0] = listRaw[-2][0]
+            listFilteredDRComp[-1][0] = listRaw[-2][0]*1
             listFilteredDRComp.append(filtDRC.doDeadReckoning(listFilteredDRComp[-1], listFiltered[-1], True))
             listFilteredDRComp = limitSize(listFilteredDRComp)
 

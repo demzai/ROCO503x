@@ -10,7 +10,7 @@ class DeadReckon(object):
     prevVelSmooth = [0,0,0]
 
     prevPosActual = [0,0,0]
-    prevPosSmooth = [0,0,0]
+    prevPosSmooth = [136,0,0]
 
 
     # Ensure angles remain within 0 - 2pi range

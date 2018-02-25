@@ -18,11 +18,15 @@ import complementary_filter as cf
 dataFile = None
 listRaw = []
 listRawDR = []
+listRawDRComp = []
 listFiltered = []
 listFilteredDR = []
+listFilteredDRComp = []
 
 rawDR = dr.DeadReckon()
+rawDRC = dr.DeadReckon()
 filtDR = dr.DeadReckon()
+filtDRC = dr.DeadReckon()
 
 count = 0
 cutoffFrequency = [20, 5]  # [Accel Low Pass, Gyro High Pass]
@@ -102,7 +106,7 @@ def init():
     ###
     # Remove noisy start to filtered data
     ###
-    global listRaw, listRawDR, listFiltered, listFilteredDR
+    global listRaw, listRawDR, listRawDRComp, listFiltered, listFilteredDR, listFilteredDRComp
     while True:
         # Get raw data
         # [time, ax,  ay,  az,  gx,  gy,  gz]
@@ -150,6 +154,8 @@ def init():
                    listRawDR[0][10:]
 
     listFilteredDR.append(listRawDR[0])
+    listRawDRComp = listRawDR*1
+    listFilteredDRComp = listRawDR*1
 
     return
 
@@ -159,8 +165,8 @@ def init():
 ####################################################
 def main():
     global count, sleepTime, inputType
-    global listRaw, listRawDR, listRawT0, listRawT1
-    global listFiltered, listFilteredDR, listFiltT0, listFiltT1
+    global listRaw, listRawDR, listRawDRComp, rawDR, rawDRC
+    global listFiltered, listFilteredDR, listFilteredDRComp, filtDR, filtDRC
     count += 1
 
     # Get raw data
@@ -186,14 +192,23 @@ def main():
             listFiltered = limitSize(listFiltered)
 
             # Get dead reckoned data
-            listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], True))
+            listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
             listRawDR = limitSize(listRawDR)
+
+            listRawDRComp.append(rawDRC.doDeadReckoning(listRawDRComp[-1], listRaw[-1], True))
+            listRawDRComp = limitSize(listRawDRComp)
+
             listFilteredDR[-1][0] = listRaw[-2][0]
-            listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listRaw[-1], False))
+            listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
             listFilteredDR = limitSize(listFilteredDR)
 
+            listFilteredDRComp[-1][0] = listRaw[-2][0]
+            listFilteredDRComp.append(filtDRC.doDeadReckoning(listFilteredDRComp[-1], listFiltered[-1], True))
+            listFilteredDRComp = limitSize(listFilteredDRComp)
+
             # Output data to a text file
-            temp = [listRaw[-1] + listFiltered[-1] + listRawDR[-1] + listFilteredDR[-1]]
+            temp = [listRaw[-1] + listFiltered[-1] + listRawDR[-1] + listFilteredDR[-1] + \
+                    listRawDRComp[-1], listFilteredDRComp[-1]]
             fh.write(''.join(str(e) for e in temp))
             fh.write("\n")
 
@@ -220,9 +235,8 @@ def main():
         useList2 = listFilteredDR
         # print(listFilteredDR[-1])
         if (count == updateEvery):
-            # gr.updatePlot(graphAccX, getCol(useList1, axis + 3 * triplet), getCol(useList1, 0))
-            gr.updatePlot(graphAccY, getCol(useList1, 3 + 3 * triplet), getCol(useList1, 0))#1 + 3 * triplet))
-            gr.updatePlot(graphAccX, getCol(useList2, 3 + 3 * triplet), getCol(useList2, 0))#1 + 3 * triplet))
+            # gr.updatePlot(graphAccY, getCol(useList1, 3 + 3 * triplet), getCol(useList1, 0))#1 + 3 * triplet))
+            # gr.updatePlot(graphAccX, getCol(useList2, 3 + 3 * triplet), getCol(useList2, 0))#1 + 3 * triplet))
             print(listRaw[-1][0])
 
         count = count % updateEvery

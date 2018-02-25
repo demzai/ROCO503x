@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2f34003c-fd9b-4be5-95d6-4180057b916f" name="Default" comment="Created">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/Data/CodeResults.txt" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CodeResults.txt" afterPath="$PROJECT_DIR$/CodeResults.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Main.py" afterPath="$PROJECT_DIR$/Main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/complementary_filter.py" afterPath="$PROJECT_DIR$/complementary_filter.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dead_reckoning.py" afterPath="$PROJECT_DIR$/dead_reckoning.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -14,15 +14,15 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/ROCO503x$Main.coverage" NAME="Main Coverage Results" MODIFIED="1519580379611" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/ROCO503x$Main.coverage" NAME="Main Coverage Results" MODIFIED="1519581078398" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file leaf-file-name="Main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="966">
-              <caret line="224" column="84" lean-forward="false" selection-start-line="224" selection-start-column="84" selection-end-line="224" selection-end-column="84" />
+            <state relative-caret-position="-233">
+              <caret line="209" column="91" lean-forward="false" selection-start-line="209" selection-start-column="91" selection-end-line="209" selection-end-column="91" />
               <folding />
             </state>
           </provider>
@@ -694,8 +694,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="966">
-          <caret line="224" column="84" lean-forward="false" selection-start-line="224" selection-start-column="84" selection-end-line="224" selection-end-column="84" />
+        <state relative-caret-position="-233">
+          <caret line="209" column="91" lean-forward="false" selection-start-line="209" selection-start-column="91" selection-end-line="209" selection-end-column="91" />
           <folding />
         </state>
       </provider>

@@ -4,13 +4,13 @@ from helper_functions import *
 
 class DeadReckon(object):
 
-    prevAccSmooth = [0.0312,1,0]
+    prevAccSmooth = [-1.008,-0.005,0]
 
     prevVelActual = [0,0,0]
-    prevVelSmooth = [0,0,0]
+    prevVelSmooth = [8.41,8.33,-12.22]
 
     prevPosActual = [0,0,0]
-    prevPosSmooth = [0,0,0]
+    prevPosSmooth = [-2165.648,-2115.03,3011.83]
 
 
     # Ensure angles remain within 0 - 2pi range
@@ -68,7 +68,7 @@ class DeadReckon(object):
 
         # Re-orientate the accelerometer values based on the IMU orientation
         acc = np.array([raw[1], raw[2], raw[3]])
-        acc = dcm.dot(acc.transpose())
+        # acc = dcm.dot(acc.transpose())
 
         # Update the acceleration, velocity & position info
         g = -9.81
@@ -87,7 +87,7 @@ class DeadReckon(object):
 
             # Position += v*t - 0.5*a*t^2
             self.prevPosActual[i] += (complete[i+4] - 0.5 * acc[i] * delTime) * delTime
-            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i])
+            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i], 0.99)
             complete[i + 7] = self.prevPosActual[i] - self.prevPosSmooth[i]
 
         return complete

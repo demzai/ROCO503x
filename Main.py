@@ -172,10 +172,6 @@ def main():
     # Get raw data
     nextData = getNextData()
     orientation = cf.getOrientationFromGravity(nextData)
-    # mult = 1.0
-    # nextData[4] = orientation[0]
-    # nextData[5] = orientation[1]
-    # nextData[6] = orientation[2]
     listRaw.append(nextData)
     listRaw = limitSize(listRaw)
 
@@ -183,7 +179,7 @@ def main():
     if(listRaw.__len__() >= 300):
         if (nextData != None):
             global listRawDR, listFilteredDR, listFiltered
-            listFiltered[-1][0] = listRaw[-2][0]
+            listFiltered[-1][0] = listRaw[-2][0]*1
             listFiltered.append([listRaw[-1][0]] +
                                 fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', 2.5, 1]) +
                                 fl.filterData(listRaw, [4, 5, 6], ['butter', 'low', 2.5, 4])
@@ -232,11 +228,12 @@ def main():
         triplet = 4
         axis = 2
         useList1 = listRawDR
-        useList2 = listFilteredDR
+        useList2 = listRawDR
         # print(listFilteredDR[-1])
         if (count == updateEvery):
-            # gr.updatePlot(graphAccY, getCol(useList1, 3 + 3 * triplet), getCol(useList1, 0))#1 + 3 * triplet))
-            # gr.updatePlot(graphAccX, getCol(useList2, 3 + 3 * triplet), getCol(useList2, 0))#1 + 3 * triplet))
+            # gr.updatePlot(graphAccY, getCol(useList1, 1 + 3 * triplet), getCol(useList1, 0))#1 + 3 * triplet))
+            # gr.updatePlot(graphAccX, getCol(useList2, 2 + 3 * triplet), getCol(useList2, 0))#1 + 3 * triplet))
+            # gr.updatePlot(graphAccY, getCol(useList2, 3 + 3 * triplet), getCol(useList2, 0))  # 1 + 3 * triplet))
             print(listRaw[-1][0])
 
         count = count % updateEvery

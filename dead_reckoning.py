@@ -75,10 +75,10 @@ class DeadReckon(object):
         for i in range(0, 3):
             # Acceleration
             self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], acc[i])
-            complete[i + 1] = (acc[i]-self.prevAccSmooth[i])*g
+            complete[i + 1] = acc[i]*g - self.prevAccSmooth[i]*g
 
             # Subtract gravity - fails unless gravity is pointing down!!!
-            acc[i] = (acc[i]-self.prevAccSmooth[i])*g
+            acc[i] = acc[i]*g - self.prevAccSmooth[i]*g
 
             # Velocity += a*t
             self.prevVelActual[i] += acc[i] * delTime

@@ -182,7 +182,7 @@ def main():
             listFiltered[-1][0] = listRaw[-2][0]*1
             listFiltered.append([listRaw[-1][0]] +
                                 fl.filterData(listRaw, [1, 2, 3], ['butter', 'low', 2.5, 1]) +
-                                fl.filterData(listRaw, [4, 5, 6], ['butter', 'low', 60, 4])
+                                fl.filterData(listRaw, [4, 5, 6], ['butter', 'band', [0.5,2.5], 4])
                                 )
 
             listFiltered = limitSize(listFiltered)
@@ -191,16 +191,16 @@ def main():
             listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
             listRawDR = limitSize(listRawDR)
 
-            listRawDRComp.append(rawDRC.doDeadReckoning(listRawDRComp[-1], listRaw[-1], True))
-            listRawDRComp = limitSize(listRawDRComp)
-
-            listFilteredDR[-1][0] = listRaw[-2][0]
-            listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
-            listFilteredDR = limitSize(listFilteredDR)
-
-            listFilteredDRComp[-1][0] = listRaw[-2][0]
-            listFilteredDRComp.append(filtDRC.doDeadReckoning(listFilteredDRComp[-1], listFiltered[-1], True))
-            listFilteredDRComp = limitSize(listFilteredDRComp)
+            # listRawDRComp.append(rawDRC.doDeadReckoning(listRawDRComp[-1], listRaw[-1], True))
+            # listRawDRComp = limitSize(listRawDRComp)
+            #
+            # listFilteredDR[-1][0] = listRaw[-2][0]
+            # listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
+            # listFilteredDR = limitSize(listFilteredDR)
+            #
+            # listFilteredDRComp[-1][0] = listRaw[-2][0]
+            # listFilteredDRComp.append(filtDRC.doDeadReckoning(listFilteredDRComp[-1], listFiltered[-1], True))
+            # listFilteredDRComp = limitSize(listFilteredDRComp)
 
             # Output data to a text file
             temp = [listRaw[-1] + listFiltered[-1] + listRawDR[-1] + listFilteredDR[-1] + \
@@ -225,14 +225,14 @@ def main():
         quaternion = 5
         """
 
-        triplet = 4
+        triplet = 2
         axis = 2
         useList1 = listRawDR
-        useList2 = listRawDR
+        useList2 = listFilteredDR
         # print(listFilteredDR[-1])
         if (count == updateEvery):
             # gr.updatePlot(graphAccY, getCol(useList1, 1 + 3 * triplet), getCol(useList1, 0))#1 + 3 * triplet))
-            # gr.updatePlot(graphAccX, getCol(useList2, 2 + 3 * triplet), getCol(useList2, 0))#1 + 3 * triplet))
+            # gr.updatePlot(graphAccX, getCol(useList2, 1 + 3 * triplet), getCol(useList2, 0))#1 + 3 * triplet))
             # gr.updatePlot(graphAccY, getCol(useList2, 3 + 3 * triplet), getCol(useList2, 0))  # 1 + 3 * triplet))
             print(listRaw[-1][0])
 

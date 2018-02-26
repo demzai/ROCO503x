@@ -8,7 +8,7 @@ from helper_functions import *
 ####################################################
 ################# GLOBAL CONSTANTS #################
 ####################################################
-imuSampleFrequency = 137
+imuSampleFrequency = 106.38297872340425531914893617021
 chebyRipple = 1 #dB
 
 

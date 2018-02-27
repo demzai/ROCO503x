@@ -4,13 +4,13 @@ from helper_functions import *
 
 class DeadReckon(object):
 
-    prevAccSmooth = [0,0,1]
+    prevAccSmooth = [0.04,0.04,0.04]
 
     prevVelActual = [0,0,0]
-    prevVelSmooth = [4.45,2.75,0.82]
+    prevVelSmooth = [56,16.1,0]
 
     prevPosActual = [0,0,0]
-    prevPosSmooth = [-96.7,-40.5,-29.1]
+    prevPosSmooth = [-270,-69.5,0]
 
 
     # Ensure angles remain within 0 - 2pi range
@@ -51,9 +51,9 @@ class DeadReckon(object):
                 complete[i + 10] = orientation[i+3]
                 complete[i + 13] = orientation[i]
         # orientation[2] = 0
-        orientation[0] *= pi/180
-        orientation[1] *= pi/180
-        orientation[2] *= pi/180
+        # orientation[0] *= pi/180
+        # orientation[1] *= pi/180
+        # orientation[2] *= pi/180
         complete[16:20] = qt.euler_to_quat(orientation[0:3])
 
 
@@ -74,8 +74,8 @@ class DeadReckon(object):
         g = -9.81
         for i in range(0, 3):
             # Acceleration
-            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], acc[i])
-            complete[i + 1] = (acc[i]-self.prevAccSmooth[i])*g
+            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], acc[i], 1)
+            complete[i + 1] = acc[i]*g#-self.prevAccSmooth[i])*g
 
             # Subtract gravity - fails unless gravity is pointing down!!!
             acc[i] = (acc[i]-self.prevAccSmooth[i])*g
@@ -87,7 +87,7 @@ class DeadReckon(object):
 
             # Position += v*t - 0.5*a*t^2
             self.prevPosActual[i] += (complete[i+4] - 0.5 * acc[i] * delTime) * delTime
-            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i], 0.99)
+            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i])
             complete[i + 7] = self.prevPosActual[i] - self.prevPosSmooth[i]
 
         return complete

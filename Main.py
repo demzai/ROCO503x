@@ -203,8 +203,8 @@ def main():
             listFilteredDRComp = limitSize(listFilteredDRComp)
 
             # Output data to a text file
-            temp = [listRaw[-1] + listFiltered[-1] + listRawDR[-1] + listFilteredDR[-1] + \
-                    listRawDRComp[-1], listFilteredDRComp[-1]]
+            temp = [listRawDR[-1]]# + listFiltered[-1] + listRawDR[-1] + listFilteredDR[-1] + \
+                    # listRawDRComp[-1], listFilteredDRComp[-1]
             fh.write(''.join(str(e) for e in temp))
             fh.write("\n")
 
@@ -226,12 +226,12 @@ def main():
         """
 
         triplet = 2
-        axis = 2
+        axis = 1
         useList1 = listRawDR
-        useList2 = listRawDR
+        useList2 = listFilteredDR
         # print(listFilteredDR[-1])
         if (count == updateEvery):
-            # gr.updatePlot(graphAccY, getCol(useList1, 1 + 3 * triplet), getCol(useList1, 0))#1 + 3 * triplet))
+            gr.updatePlot(graphAccY, getCol(useList1, axis + 3 * triplet), getCol(useList1, 2 + 3 * triplet))
             # gr.updatePlot(graphAccY, getCol(useList2, 2 + 3 * triplet), getCol(useList2, 1 + 3 * triplet))
             # gr.updatePlot(graphAccY, getCol(useList2, 3 + 3 * triplet), getCol(useList2, 0))  # 1 + 3 * triplet))
             print(listRaw[-1][0])

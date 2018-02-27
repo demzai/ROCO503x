@@ -8,7 +8,7 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "Z-PatternIMU.txt"
+fileLocale = "Z-PatternIMU0.txt"
 writeFileLocale = "CodeResults.txt"
 
 # Graphs
@@ -22,11 +22,11 @@ graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 sleepTime = 0.0001
 updateEvery = 10
 startTime = 0.0
-numSamplesMax = 1000
+numSamplesMax = 999
 
 # Complementary filter
 beta = 0.99
-alpha = 0.995
+alpha = 1
 
 
 ####################################################

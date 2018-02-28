@@ -5,8 +5,8 @@ from helper_functions import *
 class DeadReckon(object):
 
     prevAccActual = [0,0,0]
-    prevAccSmooth = [0.181611, 0.912151, -0.00421301]  # Raw
-    # prevAccSmooth = [0.097815, 0.99511, -0.0063323]  # Filtered
+    # prevAccSmooth = [0.151, 0.942, -0.00499]  # Raw
+    prevAccSmooth = [0.097815, 0.99511, -0.0063323]  # Filtered
 
     prevVelActual = [0,0,0]
     prevVelSmooth = [0,0,0]
@@ -82,7 +82,7 @@ class DeadReckon(object):
             # Velocity += a*t
             self.prevVelActual[i] += acc[i] * delTime
             self.prevVelSmooth[i] = expAvg(self.prevVelSmooth[i], self.prevVelActual[i])
-            complete[i + 4] = self.prevVelSmooth[i]
+            complete[i + 4] = self.prevVelActual[i] - self.prevVelSmooth[i]
 
             # Position += v*t - 0.5*a*t^2
             self.prevPosActual[i] += (complete[i+4] - 0.5 * acc[i] * delTime) * delTime

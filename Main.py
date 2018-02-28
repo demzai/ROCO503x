@@ -188,19 +188,19 @@ def main():
             listFiltered = limitSize(listFiltered)
 
             # Get dead reckoned data
-            # listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
-            # listRawDR = limitSize(listRawDR)
+            listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
+            listRawDR = limitSize(listRawDR)
 
             # listFilteredDR[-1][0] = listRaw[-2][0]
             # listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
             # listFilteredDR = limitSize(listFilteredDR)
 
-            listFilteredDRComp[-1][0] = listRaw[-2][0]
-            listFilteredDRComp.append(filtDRC.doDeadReckoning(listFilteredDRComp[-1], listFiltered[-1], True))
-            listFilteredDRComp = limitSize(listFilteredDRComp)
+            # listFilteredDRComp[-1][0] = listRaw[-2][0]
+            # listFilteredDRComp.append(filtDRC.doDeadReckoning(listFilteredDRComp[-1], listFiltered[-1], True))
+            # listFilteredDRComp = limitSize(listFilteredDRComp)
 
             # Output data to a text file
-            temp = [listRaw[-1] + listFiltered[-1] + listFilteredDRComp[-1]]# + listFilteredDR[-1] + \
+            temp = [listRaw[-1] + listFiltered[-1] + listRawDR[-1]]# + listFilteredDR[-1] + \
                     # listRawDRComp[-1], listFilteredDRComp[-1]]
             fh.write(''.join(str(e) for e in temp))
             fh.write("\n")
@@ -224,7 +224,7 @@ def main():
 
         triplet = 2
         axis = 3
-        useList1 = listFilteredDRComp
+        useList1 = listRawDR
         # print(listFilteredDR[-1])
         if (count == updateEvery):
             gr.updatePlot(graphAccY, getCol(useList1, axis + 3 * triplet), getCol(useList1, 0))#1 + 3 * triplet))

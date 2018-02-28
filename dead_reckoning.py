@@ -4,8 +4,8 @@ from helper_functions import *
 
 class DeadReckon(object):
 
-    # prevAccSmooth = [-1.008999925, -0.0057490723, 0.0024915157] # Raw
-    prevAccSmooth = [-1.009,-0.0057491,0.0024916] # Filtered
+    prevAccSmooth = [-1.008999925, -0.0057490723, 0.002491] # Raw
+    # prevAccSmooth = [-1.009,-0.0057491,0.0024916] # Filtered
 
     prevVelActual = [0,0,0]
     prevVelSmooth = [0,0,0]

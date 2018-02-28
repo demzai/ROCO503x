@@ -4,13 +4,14 @@ from helper_functions import *
 
 class DeadReckon(object):
 
-    prevAccSmooth = [-1.008,-0.005,0]
+    # prevAccSmooth = [-1.008999925, -0.0057490723, 0.0024915157] # Raw
+    prevAccSmooth = [-1.009,-0.0057491,0.0024916] # Filtered
 
     prevVelActual = [0,0,0]
-    prevVelSmooth = [8.41,8.33,-12.22]
+    prevVelSmooth = [0,0,0]
 
     prevPosActual = [0,0,0]
-    prevPosSmooth = [-2165.648,-2115.03,3011.83]
+    prevPosSmooth = [0,0,0]
 
 
     # Ensure angles remain within 0 - 2pi range
@@ -50,10 +51,6 @@ class DeadReckon(object):
             for i in range(0, 3):
                 complete[i + 10] = orientation[i+3]
                 complete[i + 13] = orientation[i]
-        # orientation[2] = 0
-        orientation[0] *= pi/180
-        orientation[1] *= pi/180
-        orientation[2] *= pi/180
         complete[16:20] = qt.euler_to_quat(orientation[0:3])
 
 
@@ -87,7 +84,7 @@ class DeadReckon(object):
 
             # Position += v*t - 0.5*a*t^2
             self.prevPosActual[i] += (complete[i+4] - 0.5 * acc[i] * delTime) * delTime
-            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i], 0.99)
+            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i])
             complete[i + 7] = self.prevPosActual[i] - self.prevPosSmooth[i]
 
         return complete

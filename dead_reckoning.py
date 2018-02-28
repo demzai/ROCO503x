@@ -5,7 +5,7 @@ from helper_functions import *
 class DeadReckon(object):
 
     prevAccActual = [0,0,0]
-    prevAccSmooth = [0.1819888, 0.911777, -0.00420346]  # Raw
+    prevAccSmooth = [0.181611, 0.912151, -0.00421301]  # Raw
     # prevAccSmooth = [0.097815, 0.99511, -0.0063323]  # Filtered
 
     prevVelActual = [0,0,0]
@@ -73,7 +73,7 @@ class DeadReckon(object):
         for i in range(0, 3):
             # Acceleration
             self.prevAccActual[i] = acc[i]
-            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], self.prevAccActual[i], 0.95)
+            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], self.prevAccActual[i])
             complete[i + 1] =  self.prevAccActual[i] - self.prevAccSmooth[i]
 
             # Subtract gravity - fails unless gravity is pointing down!!!

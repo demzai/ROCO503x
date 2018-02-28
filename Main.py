@@ -226,7 +226,7 @@ def main():
         quaternion = 5
         """
 
-        triplet = 4
+        triplet = 2
         axis = 3
         useList1 = listRawDR
         # print(listFilteredDR[-1])

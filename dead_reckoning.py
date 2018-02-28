@@ -2,16 +2,21 @@ import quaternion as qt
 import complementary_filter as cf
 from helper_functions import *
 
+
 class DeadReckon(object):
 
-    prevAccSmooth = [0.04,0.04,0.04]
+    accSmooth = 0.98
+    prevAccActual = [0, 0, 0]
+    prevAccSmooth = [0.006, 0, 1.0198595]  # Filtered & Smoothed
+    # prevAccSmooth = [0.005971, -0.0064823, 1.0198595] # Raw with no smoothing
 
-    prevVelActual = [0,0,0]
-    prevVelSmooth = [56,16.1,0]
+    velSmooth = 0.98
+    prevVelActual = [0, 0, 0]
+    prevVelSmooth = [0, 0, 0]
 
-    prevPosActual = [0,0,0]
-    prevPosSmooth = [-270,-69.5,0]
-
+    posSmooth = 1
+    prevPosActual = [0, 0, 0]
+    prevPosSmooth = [0, 0, 0]
 
     # Ensure angles remain within 0 - 2pi range
     def angleRange(self, angle):
@@ -29,7 +34,6 @@ class DeadReckon(object):
         rot = np.matrix(rotZ) * np.matrix(rotY) * np.matrix(rotX)
         return rot.tolist()
 
-
     # Perform dead reckoning on the provided raw data
     def doDeadReckoning(self, prevComplete, raw, useComplimentaryFilter=False):
         # Ensure that prevComplete isn't modified anywhere by copying the data over beforehand
@@ -40,7 +44,7 @@ class DeadReckon(object):
         complete[0] = raw[0]
 
         # Update the Euler orientation
-        if(useComplimentaryFilter == False):
+        if useComplimentaryFilter is False:
             orientation = integrateGyro(prevComplete[13:16], raw[4:7], delTime)
             for i in range(0, 3):
                 complete[i + 10] = raw[i + 4]
@@ -56,8 +60,6 @@ class DeadReckon(object):
         # orientation[2] *= pi/180
         complete[16:20] = qt.euler_to_quat(orientation[0:3])
 
-
-
         # UPDATE THE QUATERNION ORIENTATION
         # Small angle Euler angles do not work over time
         # Quaternions do work, and are safer as they don't suffer from gimbal lock
@@ -67,27 +69,25 @@ class DeadReckon(object):
         dcm = np.array(qt.quat_to_dcm(complete[16:20]))
 
         # Re-orientate the accelerometer values based on the IMU orientation
-        acc = np.array([raw[1], raw[2], raw[3]])
-        # acc = dcm.dot(acc.transpose())
+        self.prevAccActual = np.array([raw[1], raw[2], raw[3]])
+        # self.prevAccActual = dcm.dot(self.prevAccActual.transpose())
 
         # Update the acceleration, velocity & position info
         g = -9.81
         for i in range(0, 3):
             # Acceleration
-            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], acc[i], 1)
-            complete[i + 1] = acc[i]*g#-self.prevAccSmooth[i])*g
-
-            # Subtract gravity - fails unless gravity is pointing down!!!
-            acc[i] = (acc[i]-self.prevAccSmooth[i])*g
+            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], self.prevAccActual[i], self.accSmooth)
+            self.prevAccActual[i] = self.prevAccActual[i]*g-self.prevAccSmooth[i]*g
+            complete[i + 1] = self.prevAccActual[i]
 
             # Velocity += a*t
-            self.prevVelActual[i] += acc[i] * delTime
-            self.prevVelSmooth[i] = expAvg(self.prevVelSmooth[i], self.prevVelActual[i])
+            self.prevVelActual[i] += self.prevAccActual[i] * delTime
+            self.prevVelSmooth[i] = expAvg(self.prevVelSmooth[i], self.prevVelActual[i], self.velSmooth)
             complete[i + 4] = self.prevVelActual[i] - self.prevVelSmooth[i]
 
             # Position += v*t - 0.5*a*t^2
-            self.prevPosActual[i] += (complete[i+4] - 0.5 * acc[i] * delTime) * delTime
-            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i])
+            self.prevPosActual[i] += (complete[i+4] - 0.5 * self.prevAccActual[i] * delTime) * delTime
+            self.prevPosSmooth[i] = expAvg(self.prevPosSmooth[i], self.prevPosActual[i], self.posSmooth)
             complete[i + 7] = self.prevPosActual[i] - self.prevPosSmooth[i]
 
         return complete

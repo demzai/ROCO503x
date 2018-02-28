@@ -17,9 +17,10 @@ errorTheta = []
 def getOrientationFromGravity(data):
     # Reference: https://goo.gl/eChMxp
     # [Roll, Pitch, Yaw]
-    orientation = [0.0,
-        atan2(-data[2], sqrt(data[1] ** 2 + data[0] ** 2)) * 180 / pi,
-        atan2(data[1], data[0]) * 180 / pi]
+    orientation = [
+        atan2(data[1], data[2]) * 180 / pi,
+        atan2(-data[0], sqrt(data[1] ** 2 + data[2] ** 2)) * 180 / pi,
+        0.0]
     return orientation
 
 # Perform a complementary filter on the data

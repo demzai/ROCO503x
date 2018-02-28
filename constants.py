@@ -8,7 +8,7 @@ import graph as gr
 inputType = "file"
 if (inputType == "live"):
     import Spatial_simple_cl as spatialC
-fileLocale = "Z-PatternIMU0.txt"
+fileLocale = "Z-PatternIMU.txt"
 writeFileLocale = "CodeResults.txt"
 
 # Graphs

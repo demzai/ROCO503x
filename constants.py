@@ -22,7 +22,7 @@ graphAccZ = gr.newPlot(graphChart, [], [], 'b', None, None, 3, 'o')
 sleepTime = 0.0001
 updateEvery = 10
 startTime = 0.0
-numSamplesMax = 999
+numSamplesMax = 500
 
 # Complementary filter
 beta = 0.99

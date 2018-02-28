@@ -191,9 +191,9 @@ def main():
             # listRawDR.append(rawDR.doDeadReckoning(listRawDR[-1], listRaw[-1], False))
             # listRawDR = limitSize(listRawDR)
 
-            listFilteredDR[-1][0] = listRaw[-2][0]
-            listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
-            listFilteredDR = limitSize(listFilteredDR)
+            # listFilteredDR[-1][0] = listRaw[-2][0]
+            # listFilteredDR.append(filtDR.doDeadReckoning(listFilteredDR[-1], listFiltered[-1], False))
+            # listFilteredDR = limitSize(listFilteredDR)
 
             listFilteredDRComp[-1][0] = listRaw[-2][0]
             listFilteredDRComp.append(filtDRC.doDeadReckoning(listFilteredDRComp[-1], listFiltered[-1], True))
@@ -229,13 +229,13 @@ def main():
         # print(listFilteredDR[-1])
         if (count == updateEvery):
             gr.updatePlot(graphAccY, getCol(useList1, axis + 3 * triplet), getCol(useList1, 2 + 3 * triplet))
-            # gr.updatePlot(graphAccX, getCol(useList1, axis + 3 * (triplet+1)), getCol(useList1, 0))#1 + 3 * triplet))
+            # gr.updatePlot(graphAccX, getCol(useList1, axis+1 + 3 * triplet), getCol(useList1, 0))#1 + 3 * triplet))
             # gr.updatePlot(graphAccY, getCol(useList2, 3 + 3 * triplet), getCol(useList2, 0))  # 1 + 3 * triplet))
             print(listRaw[-1][0])
 
         count = count % updateEvery
-        # if (inputType == 'file'):
-        #     time.sleep(sleepTime)
+        if (inputType == 'file'):
+            time.sleep(sleepTime)
 
 
 # Initialize the system

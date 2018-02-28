@@ -5,12 +5,12 @@ from helper_functions import *
 
 class DeadReckon(object):
 
-    accSmooth = 0.98
-    prevAccActual = [0, 0, 0]
-    prevAccSmooth = [0.006, 0, 1.0198595]  # Filtered & Smoothed
+    accSmooth = 0.9
+    prevAccActual = [0, 0, 0] #-0.0095
+    prevAccSmooth = [0.0065, -0.007, 1.0198595]  # Filtered & Smoothed
     # prevAccSmooth = [0.005971, -0.0064823, 1.0198595] # Raw with no smoothing
 
-    velSmooth = 0.98
+    velSmooth = 0.995
     prevVelActual = [0, 0, 0]
     prevVelSmooth = [0, 0, 0]
 

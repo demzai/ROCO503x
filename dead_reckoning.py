@@ -4,13 +4,15 @@ from helper_functions import *
 
 class DeadReckon(object):
 
-    prevAccSmooth = [0.0312,1,0]
+    prevAccActual = [0,0,0]
+    prevAccSmooth = [0.1819888, 0.911777, -0.00420346]  # Raw
+    # prevAccSmooth = [0.097815, 0.99511, -0.0063323]  # Filtered
 
     prevVelActual = [0,0,0]
     prevVelSmooth = [0,0,0]
 
     prevPosActual = [0,0,0]
-    prevPosSmooth = [136,0,0]
+    prevPosSmooth = [0,0,0]
 
 
     # Ensure angles remain within 0 - 2pi range
@@ -50,10 +52,6 @@ class DeadReckon(object):
             for i in range(0, 3):
                 complete[i + 10] = orientation[i+3]
                 complete[i + 13] = orientation[i]
-        # orientation[2] = 0
-        orientation[0] *= pi/180
-        orientation[1] *= pi/180
-        orientation[2] *= pi/180
         complete[16:20] = qt.euler_to_quat(orientation[0:3])
 
 
@@ -68,22 +66,23 @@ class DeadReckon(object):
 
         # Re-orientate the accelerometer values based on the IMU orientation
         acc = np.array([raw[1], raw[2], raw[3]])
-        acc = dcm.dot(acc.transpose())
+        # acc = dcm.dot(acc.transpose())
 
         # Update the acceleration, velocity & position info
         g = -9.81
         for i in range(0, 3):
             # Acceleration
-            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], acc[i])
-            complete[i + 1] = (acc[i]-self.prevAccSmooth[i])*g
+            self.prevAccActual[i] = acc[i]
+            self.prevAccSmooth[i] = expAvg(self.prevAccSmooth[i], self.prevAccActual[i], 0.95)
+            complete[i + 1] =  self.prevAccActual[i] - self.prevAccSmooth[i]
 
             # Subtract gravity - fails unless gravity is pointing down!!!
-            acc[i] = (acc[i]-self.prevAccSmooth[i])*g
+            acc[i] = self.prevAccActual[i]*g - self.prevAccSmooth[i]*g
 
             # Velocity += a*t
             self.prevVelActual[i] += acc[i] * delTime
             self.prevVelSmooth[i] = expAvg(self.prevVelSmooth[i], self.prevVelActual[i])
-            complete[i + 4] = self.prevVelActual[i] - self.prevVelSmooth[i]
+            complete[i + 4] = self.prevVelSmooth[i]
 
             # Position += v*t - 0.5*a*t^2
             self.prevPosActual[i] += (complete[i+4] - 0.5 * acc[i] * delTime) * delTime

@@ -226,8 +226,8 @@ def main():
         quaternion = 5
         """
 
-        triplet = 2
-        axis = 1
+        triplet = 3
+        axis = 3
         useList1 = listFilteredDRComp
         # print(listFilteredDR[-1])
         if (count == updateEvery):

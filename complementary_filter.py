@@ -81,9 +81,9 @@ def doComplementaryFilter(prevDataFull, newDataRaw):
     # Differentiate for the new gyroscope values
     outputGyro = prevTheta * 1
     for i in range(0, 3):
-        outputGyro[i] = outputTheta[i] - prevTheta[i]
+        outputGyro[i] = (outputTheta[i] - prevTheta[i])*180/pi
 
     # Return the new orientation and gyroscope data
     returnValue = [outputTheta[0], outputTheta[1], outputTheta[2],
-                   newDataRaw[4], newDataRaw[5], newDataRaw[6]]
+                   outputGyro[0], outputGyro[1], outputGyro[2]]
     return returnValue#[0,0,0,0,0,0]
